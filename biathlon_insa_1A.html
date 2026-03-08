@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Biathlon INSA"/>
+  <title>Biathlon INSA 1A</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background: #0a0f1a; font-family: 'Trebuchet MS', sans-serif; overscroll-behavior: none; }
+    select, input, button { font-family: inherit; }
+    ::-webkit-scrollbar { display: none; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel">
+const { useState, useEffect, useCallback } = React;
+
+
+// ─── STUDENTS ────────────────────────────────────────────────────────────────
+const STUDENTS = [
+  { id:1,  nom:"Antoine",             prenom:"Clara",     defaultStatus:"normal" },
+  { id:2,  nom:"Baleydier",           prenom:"Martial",   defaultStatus:"normal" },
+  { id:3,  nom:"Mouillart",           prenom:"Coline",    defaultStatus:"SHN"    },
+  { id:4,  nom:"Roux",                prenom:"Manon",     defaultStatus:"normal" },
+  { id:5,  nom:"Antoine",             prenom:"Solène",    defaultStatus:"normal" },
+  { id:6,  nom:"Duffour",             prenom:"Clément",   defaultStatus:"normal" },
+  { id:7,  nom:"Dasque",              prenom:"Camille",   defaultStatus:"normal" },
+  { id:8,  nom:"Boussaguet",          prenom:"Antoine",   defaultStatus:"normal" },
+  { id:9,  nom:"Ollier",              prenom:"Antoine",   defaultStatus:"normal" },
+  { id:10, nom:"Alt",                 prenom:"Maxime",    defaultStatus:"normal" },
+  { id:11, nom:"Molina-Jurkowski",    prenom:"Dylan",     defaultStatus:"normal" },
+  { id:12, nom:"Buhagiar-Le-Merer",  prenom:"Clément",   defaultStatus:"normal" },
+  { id:13, nom:"Genniaux",            prenom:"Thaddius",  defaultStatus:"normal" },
+  { id:14, nom:"Moine",               prenom:"Timéo",     defaultStatus:"normal" },
+  { id:15, nom:"Girond",              prenom:"Fares",     defaultStatus:"normal" },
+  { id:16, nom:"Rodriguez-Tanya",     prenom:"Mariona",   defaultStatus:"normal" },
+  { id:17, nom:"Levasseur",           prenom:"Antoine",   defaultStatus:"normal" },
+  { id:18, nom:"Steffen-Pedocchi",    prenom:"Bruno",     defaultStatus:"AMG"    },
+  { id:19, nom:"Laiginhas-Vernier",   prenom:"Aurore",    defaultStatus:"normal" },
+  { id:20, nom:"Guirado",             prenom:"Keanu",     defaultStatus:"normal" },
+  { id:21, nom:"Besbes",              prenom:"Melik",     defaultStatus:"normal" },
+  { id:22, nom:"Barbe-Cazaubon",      prenom:"Guilhem",   defaultStatus:"normal" },
+  { id:23, nom:"Fonteneau",           prenom:"Kelyan",    defaultStatus:"normal" },
+  { id:24, nom:"Hoareau",             prenom:"Gatien",    defaultStatus:"normal" },
+  { id:25, nom:"Beltran",             prenom:"Alexandre", defaultStatus:"normal" },
+  { id:26, nom:"Durand-Mader-Cazot", prenom:"Raphaël",   defaultStatus:"normal" },
+  { id:27, nom:"Machenaud",           prenom:"Neven",     defaultStatus:"normal" },
+  { id:28, nom:"Dufour",              prenom:"Alexis",    defaultStatus:"normal" },
+];
+
+// startType : "staggered" (Individuel, Sprint, Eval) | "pursuit" (Poursuite) | "mass" (Mass Start)
+// penaltyType: "seconds" (ajoute du temps) | "none" (boucles courues, 1er à l'arrivée gagne)
+const SESSIONS = [
+  { id:"S1",  date:"2026-01-28", label:"S1 – Foncier",           type:"training", desc:"30' Continue + intro Tir Couché",                             tirs:0, icon:"🏃" },
+  { id:"S2",  date:"2026-02-04", label:"S2 – Foncier",           type:"training", desc:"2×15' + Tir Debout",                                          tirs:0, icon:"🏃" },
+  { id:"S3",  date:"2026-02-11", label:"S3 – Circuit Tir",       type:"training", desc:"Circuit ×3 : Course / Renfo / Tir (6' chaque)",               tirs:0, icon:"🎯" },
+  { id:"S4",  date:"2026-02-18", label:"S4 – Individuel",        type:"race",
+    desc:"5 tours × 500 m · 4 tirs C/D/C/D · Pénalité +10″/cible",
+    tirs:4, tirLabels:["C","D","C","D"], icon:"🏅",
+    startType:"staggered", startInterval:10, distance:2500,
+    penaltyType:"seconds", penaltyPerMiss:10 },
+  { id:"S5",  date:"2026-02-25", label:"S5 – Sprint",            type:"race",
+    desc:"3 tours × 416 m · 2 tirs C/D · Pénalité boucle 30 m · 1er à l'arrivée gagne",
+    tirs:2, tirLabels:["C","D"], icon:"⚡",
+    startType:"staggered", startInterval:10, distance:1248,
+    penaltyType:"none" },
+  { id:"VAC1",date:"2026-03-04", label:"🌴 VACANCES",            type:"break", desc:"" },
+  { id:"S6",  date:"2026-03-11", label:"S6 – Poursuite",         type:"race",
+    desc:"5 tours × 375 m · 4 tirs C/C/D/D · Départ décalé selon Sprint · 1er à l'arrivée gagne",
+    tirs:4, tirLabels:["C","C","D","D"], icon:"🎯",
+    startType:"pursuit", prevSession:"S5", distance:1875,
+    penaltyType:"none" },
+  { id:"VAC2",date:"2026-03-18", label:"🌴 VACANCES",            type:"break", desc:"" },
+  { id:"S7",  date:"2026-03-25", label:"S7 – Mass Start Champ.", type:"race",
+    desc:"5 tours × 187 m · 4 tirs C/C/D/D · Départ groupé · 1er à l'arrivée gagne",
+    tirs:4, tirLabels:["C","C","D","D"], icon:"🏆",
+    startType:"mass", distance:935, penaltyType:"none" },
+  { id:"S8",  date:"2026-04-01", label:"S8 – Mass Start Équipe", type:"race",
+    desc:"3 tours × 330 m · 2 tirs C/D · Départ groupé par équipe · 1er gagne",
+    tirs:2, tirLabels:["C","D"], icon:"👥",
+    startType:"mass", distance:990, penaltyType:"none" },
+  { id:"S9",  date:"2026-04-08", label:"S9 – Run & Bike",        type:"training", desc:"Bike & Run + Tir (30'+30') · 2 groupes de 10 max", tirs:0, icon:"🚴" },
+  { id:"S10", date:"2026-04-15", label:"S10 – Sprint",           type:"race",
+    desc:"3 tours × 416 m · 2 tirs C/D · Pénalité boucle 30 m · 1er à l'arrivée gagne",
+    tirs:2, tirLabels:["C","D"], icon:"⚡",
+    startType:"staggered", startInterval:10, distance:1248,
+    penaltyType:"none" },
+  { id:"VAC3",date:"2026-04-22", label:"🌴 VACANCES",            type:"break", desc:"" },
+  { id:"VAC4",date:"2026-04-29", label:"🌴 VACANCES",            type:"break", desc:"" },
+  { id:"S11", date:"2026-05-06", label:"S11 – Mass Start Champ.",type:"race",
+    desc:"5 tours × 187 m · 4 tirs C/C/D/D · Départ groupé · 1er gagne",
+    tirs:4, tirLabels:["C","C","D","D"], icon:"🏆",
+    startType:"mass", distance:935, penaltyType:"none" },
+  { id:"S12", date:"2026-05-13", label:"S12 – ÉVALUATION 🏁",   type:"eval",
+    desc:"Course Indiv : 4 tirs C/D/C/D · pénalité +30″/cible · départs décalés 10″",
+    tirs:4, tirLabels:["C","D","C","D"], icon:"📋",
+    startType:"staggered", startInterval:10, distance:2000,
+    penaltyType:"seconds", penaltyPerMiss:30 },
+];
+
+const RACE_SESSIONS = SESSIONS.filter(s => s.type !== "break");
+const RACE_SESSIONS_STATS = SESSIONS.filter(s => (s.type==="race"||s.type==="eval") && (s.tirs>0||s.distance));
+const TODAY = new Date().toISOString().slice(0,10);
+
+function findCurrentSession() {
+  let best = RACE_SESSIONS[0];
+  for (const s of RACE_SESSIONS) { if (s.date <= TODAY) best = s; }
+  return best.id;
+}
+
+const STATUS_CONFIG = {
+  "":   { label:"—",   bg:"#1e293b", text:"#64748b", border:"#334155" },
+  P:    { label:"✓",   bg:"#0f4c2a", text:"#4ade80", border:"#22c55e" },
+  ABS:  { label:"✗",   bg:"#4c0f0f", text:"#f87171", border:"#ef4444" },
+  RET:  { label:"↩",   bg:"#3b2506", text:"#fb923c", border:"#f97316" },
+  SHN:  { label:"SHN", bg:"#0f2d4c", text:"#60a5fa", border:"#3b82f6" },
+  AMG:  { label:"AMG", bg:"#2d0f4c", text:"#c084fc", border:"#a855f7" },
+};
+const STATUS_CYCLE = ["","P","ABS","RET"];
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+const fmt = d => { const [y,m,dv]=d.split("-"); return `${dv}/${m}/${y}`; };
+const fmtShort = d => { const [,m,dv]=d.split("-"); return `${dv}/${m}`; };
+
+function fmtTime(secs) {
+  if (secs===null||secs===undefined||isNaN(secs)) return "--:--";
+  const abs = Math.abs(Math.round(secs));
+  const m   = Math.floor(abs/60), h = Math.floor(m/60);
+  if (h>0) return `${h}:${String(m%60).padStart(2,"0")}:${String(abs%60).padStart(2,"0")}`;
+  return `${String(m).padStart(2,"0")}:${String(abs%60).padStart(2,"0")}`;
+}
+
+function parseMMSS(str) {
+  if (!str||!str.trim()) return 0;
+  const p = str.trim().split(":");
+  return p.length===2 ? (parseInt(p[0])||0)*60+(parseInt(p[1])||0) : (parseInt(str)||0);
+}
+
+function getStudentResult(studentId, sessionId, raceData, shooting) {
+  const session = SESSIONS.find(s=>s.id===sessionId);
+  const rd = raceData[sessionId];
+  if (!rd||!session) return null;
+  for (const wave of rd.waves) {
+    if (!wave.studentIds.includes(studentId)) continue;
+    const arrival = wave.arrivals?.[studentId];
+    if (!arrival||!wave.startedAt) return null;
+    const offset = wave.startOffsets?.[studentId]??0;
+    const runSecs = (arrival-wave.startedAt)/1000-offset;
+    if (session.penaltyType==="seconds") {
+      const tir = shooting[sessionId]?.[studentId]??{};
+      let missed=0;
+      for(let i=1;i<=session.tirs;i++){const h=tir[`t${i}`];if(h!==null&&h!==undefined)missed+=5-h;}
+      return { runSecs, offset, missed, finalTime:runSecs+missed*(session.penaltyPerMiss||10) };
+    }
+    return { runSecs, offset, missed:null, finalTime:runSecs };
+  }
+  return null;
+}
+
+function getSessionRanking(sessionId, raceData, shooting) {
+  const rd = raceData[sessionId];
+  if (!rd) return [];
+  const rows = [];
+  for (const wave of rd.waves) {
+    for (const sid of wave.studentIds) {
+      const r = getStudentResult(sid, sessionId, raceData, shooting);
+      if (r) rows.push({ studentId:sid, ...r });
+    }
+  }
+  return rows.sort((a,b)=>a.finalTime-b.finalTime);
+}
+
+function calcMissed(studentId, sessionId, shooting) {
+  const session = SESSIONS.find(s=>s.id===sessionId);
+  if (!session||!session.tirs) return null;
+  const tir = shooting[sessionId]?.[studentId]??{};
+  let missed=0, hasData=false;
+  for(let i=1;i<=session.tirs;i++){const h=tir[`t${i}`];if(h!==null&&h!==undefined){missed+=5-h;hasData=true;}}
+  return hasData?missed:null;
+}
+
+// ─── STORAGE ─────────────────────────────────────────────────────────────────
+function saveData(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
+function loadData(k,fb){try{const r=localStorage.getItem(k);return r?JSON.parse(r):fb;}catch{return fb;}}
+
+// ─── MAIN APP ────────────────────────────────────────────────────────────────
+export default function BiathlonApp() {
+  const [tab,setTab]                   = useState("appel");
+  const [sessionId,setSessionId]       = useState(findCurrentSession);
+  const [attendance,setAttendance]     = useState({});
+  const [shooting,setShooting]         = useState({});
+  const [raceData,setRaceData]         = useState({});
+  const [tirModal,setTirModal]         = useState(null);
+  const [loaded,setLoaded]             = useState(false);
+  const [saveFlash,setSaveFlash]       = useState(false);
+  const [expandedSess,setExpandedSess] = useState(null);
+  const [profilId,setProfilId]         = useState(null);
+
+  useEffect(()=>{
+    (()=>{
+      const att=loadData("biathlon_attendance",{}); const sho=loadData("biathlon_shooting",{}); const rcd=loadData("biathlon_racedata",{});
+      setAttendance(att);setShooting(sho);setRaceData(rcd);setLoaded(true);
+    })();
+  },[]);
+
+  const flash = useCallback(()=>{setSaveFlash(true);setTimeout(()=>setSaveFlash(false),600);},[]);
+  const getStatus = useCallback((sId,stId)=>attendance[sId]?.[stId]??"",[attendance]);
+
+  const cycleStatus = useCallback((stId)=>{
+    setAttendance(prev=>{
+      const st=STUDENTS.find(s=>s.id===stId);
+      const cycle=st.defaultStatus==="SHN"?["SHN","P","ABS","RET"]:st.defaultStatus==="AMG"?["AMG","P","ABS","RET"]:STATUS_CYCLE;
+      const cur=prev[sessionId]?.[stId]??"";
+      const next=cycle[(cycle.indexOf(cur)+1)%cycle.length];
+      const n={...prev,[sessionId]:{...(prev[sessionId]||{}),[stId]:next}};
+      saveData("biathlon_attendance",n);flash();return n;
+    });
+  },[sessionId,flash]);
+
+  const getTir = useCallback((sId,stId)=>shooting[sId]?.[stId]??{},[shooting]);
+
+  const updateTir = useCallback((stId,key,val)=>{
+    setShooting(prev=>{
+      const n={...prev,[sessionId]:{...(prev[sessionId]||{}),[stId]:{...(prev[sessionId]?.[stId]||{}),[key]:val}}};
+      saveData("biathlon_shooting",n);return n;
+    });
+  },[sessionId]);
+
+  const updateRaceData = useCallback((newRd)=>{setRaceData(newRd);saveData("biathlon_racedata",newRd);flash();},[flash]);
+
+  const session=SESSIONS.find(s=>s.id===sessionId)||RACE_SESSIONS[0];
+  const isRace=session.type==="race"||session.type==="eval";
+
+  if(!loaded) return <div style={{background:"#0a0f1a",height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",color:"#60a5fa",fontFamily:"system-ui",fontSize:18}}>Chargement…</div>;
+
+  const counts={P:0,ABS:0,RET:0,SHN:0,AMG:0,"":0};
+  STUDENTS.forEach(s=>{const st=getStatus(sessionId,s.id)||(s.defaultStatus!=="normal"?s.defaultStatus:"");counts[st]=(counts[st]||0)+1;});
+  const present=counts.P+counts.SHN+counts.AMG+counts.RET;
+
+  const TABS=[{id:"appel",l:"Appel",i:"📋"},{id:"seances",l:"Séances",i:"📅"},{id:"tir",l:"Tir",i:"🎯"},{id:"course",l:"Course",i:"🏁"},{id:"profil",l:"Profils",i:"📊"}];
+
+  const startBadge = session.startType==="mass" ? {bg:"#1a0f2d",color:"#c084fc",border:"#7c3aed",text:"🟢 MASS START"}
+    : session.startType==="pursuit" ? {bg:"#0d2d1a",color:"#4ade80",border:"#22c55e",text:"🔄 POURSUITE"}
+    : session.startType==="staggered" ? {bg:"#0f1e2d",color:"#60a5fa",border:"#3b82f6",text:"⏱ +"+session.startInterval+"s"}
+    : null;
+
+  return (
+    <div style={{background:"#0a0f1a",minHeight:"100vh",fontFamily:"'Trebuchet MS',sans-serif",display:"flex",flexDirection:"column",maxWidth:900,margin:"0 auto"}}>
+      <header style={{background:"linear-gradient(135deg,#0f1e3d,#0d2444)",borderBottom:"2px solid #1e3a5f",padding:"12px 16px",display:"flex",alignItems:"center",gap:10,position:"sticky",top:0,zIndex:100}}>
+        <span style={{fontSize:26}}>🎿</span>
+        <div style={{flex:1}}>
+          <div style={{color:"#e2e8f0",fontWeight:700,fontSize:16,letterSpacing:1}}>BIATHLON — INSA 1A</div>
+          <div style={{color:"#60a5fa",fontSize:12}}>Mercredi 16h–18h · {present} présents</div>
+        </div>
+        {saveFlash&&<span style={{color:"#4ade80",fontSize:12,padding:"3px 8px",background:"#0f4c2a",borderRadius:4,border:"1px solid #22c55e"}}>✓ Sauvé</span>}
+        <select value={sessionId} onChange={e=>setSessionId(e.target.value)} style={{background:"#0f2d4c",color:"#60a5fa",border:"1px solid #1e4d8c",borderRadius:6,padding:"6px 8px",fontSize:13,cursor:"pointer",maxWidth:175}}>
+          {RACE_SESSIONS.map(s=><option key={s.id} value={s.id}>{s.label} ({fmtShort(s.date)})</option>)}
+        </select>
+      </header>
+
+      <div style={{background:"#0d1d35",borderBottom:"1px solid #1e3a5f",padding:"10px 16px",display:"flex",alignItems:"center",gap:10}}>
+        <span style={{fontSize:22}}>{session.icon||"📅"}</span>
+        <div style={{flex:1}}>
+          <div style={{color:"#f1f5f9",fontWeight:700,fontSize:15}}>{session.label}</div>
+          <div style={{color:"#94a3b8",fontSize:11}}>{session.desc}</div>
+        </div>
+        {startBadge&&<span style={{background:startBadge.bg,color:startBadge.color,border:`1px solid ${startBadge.border}`,borderRadius:6,padding:"3px 9px",fontSize:11,fontWeight:700,flexShrink:0}}>{startBadge.text}</span>}
+      </div>
+
+      <main style={{flex:1,overflowY:"auto",padding:"12px 12px 80px"}}>
+        {tab==="appel"   && <AppelTab sessionId={sessionId} getStatus={getStatus} cycleStatus={cycleStatus} present={present} counts={counts} />}
+        {tab==="seances" && <SeancesTab sessionId={sessionId} setSessionId={setSessionId} expandedSess={expandedSess} setExpandedSess={setExpandedSess} />}
+        {tab==="tir"     && <TirTab session={session} sessionId={sessionId} getStatus={getStatus} getTir={getTir} setTirModal={setTirModal} />}
+        {tab==="course"  && <CourseTab session={session} sessionId={sessionId} getStatus={getStatus} getTir={getTir} raceData={raceData} updateRaceData={updateRaceData} shooting={shooting} />}
+        {tab==="profil"  && <ProfilTab profilId={profilId} setProfilId={setProfilId} raceData={raceData} shooting={shooting} getStatus={getStatus} />}
+      </main>
+
+      <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:900,background:"#0d1525",borderTop:"1px solid #1e3a5f",display:"flex",zIndex:200}}>
+        {TABS.map(t=>(
+          <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,padding:"10px 2px 8px",border:"none",cursor:"pointer",background:tab===t.id?"#0f2d4c":"transparent",borderTop:tab===t.id?"2px solid #3b82f6":"2px solid transparent",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+            <span style={{fontSize:18}}>{t.i}</span>
+            <span style={{color:tab===t.id?"#60a5fa":"#475569",fontSize:10,fontWeight:600}}>{t.l.toUpperCase()}</span>
+          </button>
+        ))}
+      </nav>
+
+      {tirModal!==null&&<TirModal student={STUDENTS.find(s=>s.id===tirModal)} session={session} tir={getTir(sessionId,tirModal)} updateTir={(k,v)=>updateTir(tirModal,k,v)} onClose={()=>setTirModal(null)} />}
+    </div>
+  );
+}
+
+// ─── APPEL TAB ───────────────────────────────────────────────────────────────
+function AppelTab({sessionId,getStatus,cycleStatus,present,counts}){
+  return(
+    <>
+      <div style={{display:"flex",gap:8,marginBottom:12}}>
+        {[{l:"Présents",v:present,c:"#22c55e",bg:"#0f2a1a"},{l:"Absents",v:counts.ABS,c:"#ef4444",bg:"#2a0f0f"},{l:"Non saisi",v:counts[""],c:"#64748b",bg:"#1e293b"}].map(s=>(
+          <div key={s.l} style={{flex:1,background:s.bg,border:`1px solid ${s.c}30`,borderRadius:8,padding:"8px 12px",textAlign:"center"}}>
+            <div style={{color:s.c,fontWeight:700,fontSize:22}}>{s.v}</div><div style={{color:"#94a3b8",fontSize:11}}>{s.l}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
+        {Object.entries(STATUS_CONFIG).filter(([k])=>k!=="").map(([k,v])=>(
+          <span key={k} style={{background:v.bg,color:v.text,border:`1px solid ${v.border}`,borderRadius:4,padding:"2px 8px",fontSize:11,fontWeight:600}}>{v.label} {k}</span>
+        ))}
+        <span style={{color:"#475569",fontSize:11,alignSelf:"center"}}>· Appuyer pour changer</span>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+        {STUDENTS.map(s=>{
+          const raw=getStatus(sessionId,s.id), st=raw||(s.defaultStatus!=="normal"?s.defaultStatus:""), cfg=STATUS_CONFIG[st]||STATUS_CONFIG[""];
+          return(
+            <button key={s.id} onClick={()=>cycleStatus(s.id)} style={{background:cfg.bg,border:`2px solid ${cfg.border}`,borderRadius:10,padding:"10px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,textAlign:"left",WebkitTapHighlightColor:"transparent"}}>
+              <div style={{width:32,height:32,borderRadius:8,background:cfg.bg,border:`1px solid ${cfg.border}`,display:"flex",alignItems:"center",justifyContent:"center",color:cfg.text,fontWeight:700,fontSize:12,flexShrink:0}}>{cfg.label}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{color:"#f1f5f9",fontWeight:700,fontSize:13,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{s.nom}</div>
+                <div style={{color:cfg.text,fontSize:12}}>{s.prenom}</div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+// ─── SEANCES TAB ─────────────────────────────────────────────────────────────
+function SeancesTab({sessionId,setSessionId,expandedSess,setExpandedSess}){
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+      {SESSIONS.map(s=>{
+        if(s.type==="break") return <div key={s.id} style={{background:"#0f1929",border:"1px solid #1e293b",borderRadius:8,padding:"8px 14px",color:"#475569",fontSize:13,display:"flex",gap:10,alignItems:"center"}}><span>{s.label}</span><span style={{marginLeft:"auto",color:"#334155",fontSize:12}}>{fmt(s.date)}</span></div>;
+        const isPast=s.date<TODAY,isCurrent=s.id===sessionId,isExp=expandedSess===s.id;
+        const tc=s.type==="eval"?"#f59e0b":s.type==="race"?"#3b82f6":"#22c55e";
+        return(
+          <div key={s.id} style={{background:isCurrent?"#0f2d4c":isPast?"#0d1525":"#0a1428",border:`2px solid ${isCurrent?"#3b82f6":isPast?"#1e293b":"#1e3a5f"}`,borderRadius:10,overflow:"hidden",opacity:isPast?0.75:1}}>
+            <div onClick={()=>setExpandedSess(isExp?null:s.id)} style={{padding:"12px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
+              <span style={{fontSize:20}}>{s.icon}</span>
+              <div style={{flex:1}}>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <span style={{color:"#f1f5f9",fontWeight:700,fontSize:14}}>{s.label}</span>
+                  {isPast&&<span style={{color:"#22c55e",fontSize:11}}>✓</span>}
+                  {isCurrent&&<span style={{background:"#1e4d8c",color:"#60a5fa",fontSize:10,padding:"1px 6px",borderRadius:4,fontWeight:700}}>EN COURS</span>}
+                </div>
+                <div style={{color:"#64748b",fontSize:12,marginTop:2}}>{fmt(s.date)}</div>
+              </div>
+              <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                {s.tirs>0&&<span style={{background:tc+"20",color:tc,border:`1px solid ${tc}60`,borderRadius:4,padding:"2px 7px",fontSize:11,fontWeight:600}}>{s.tirs} tirs</span>}
+                <span style={{color:"#475569"}}>{isExp?"▲":"▼"}</span>
+              </div>
+            </div>
+            {isExp&&(
+              <div style={{borderTop:"1px solid #1e3a5f",padding:"12px 14px",background:"#080e1a"}}>
+                <div style={{color:"#94a3b8",fontSize:13,marginBottom:10}}>{s.desc}</div>
+                {s.tirs>0&&<div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap"}}>{s.tirLabels.map((lbl,i)=><span key={i} style={{background:lbl==="C"?"#0f2d4c":"#1c1040",color:lbl==="C"?"#60a5fa":"#a78bfa",border:`1px solid ${lbl==="C"?"#3b82f6":"#7c3aed"}`,borderRadius:6,padding:"4px 10px",fontSize:13,fontWeight:700}}>Tir {i+1} — {lbl==="C"?"Couché":"Debout"}</span>)}</div>}
+                {!isCurrent&&<button onClick={()=>setSessionId(s.id)} style={{background:"#0f2d4c",color:"#60a5fa",border:"1px solid #3b82f6",borderRadius:6,padding:"6px 14px",cursor:"pointer",fontSize:13}}>↩ Aller à cette séance</button>}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── TIR TAB ─────────────────────────────────────────────────────────────────
+function TirTab({session,sessionId,getStatus,getTir,setTirModal}){
+  const hasTir=session.tirs>0;
+  const active=STUDENTS.filter(s=>{const st=getStatus(sessionId,s.id)||(s.defaultStatus!=="normal"?s.defaultStatus:"");return st!=="ABS";});
+  if(!hasTir) return <div style={{background:"#0d1525",border:"1px solid #1e293b",borderRadius:10,padding:20,textAlign:"center",color:"#475569"}}><div style={{fontSize:40,marginBottom:8}}>🏃</div><div>Pas de tir pour <strong style={{color:"#94a3b8"}}>{session.label}</strong></div></div>;
+  const withData=active.filter(s=>getTir(sessionId,s.id).t1!==undefined);
+  const totalHits=withData.reduce((acc,s)=>acc+Array.from({length:session.tirs},(_,i)=>getTir(sessionId,s.id)[`t${i+1}`]??0).reduce((a,b)=>a+b,0),0);
+  return(
+    <>
+      <div style={{background:"#0d1525",border:"1px solid #1e3a5f",borderRadius:10,padding:"10px 14px",marginBottom:12,display:"flex",flexWrap:"wrap",gap:8,alignItems:"center"}}>
+        {session.tirLabels.map((lbl,i)=><span key={i} style={{background:lbl==="C"?"#0f2d4c":"#1c1040",color:lbl==="C"?"#60a5fa":"#a78bfa",border:`1px solid ${lbl==="C"?"#3b82f6":"#7c3aed"}`,borderRadius:6,padding:"4px 10px",fontSize:13,fontWeight:700}}>T{i+1} {lbl==="C"?"🔵 Couché":"🟣 Debout"}</span>)}
+        <span style={{color:"#64748b",fontSize:12,marginLeft:"auto"}}>5 balles/tir</span>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:6}}>
+        {active.map(s=>{
+          const tir=getTir(sessionId,s.id);
+          const vals=Array.from({length:session.tirs},(_,i)=>tir[`t${i+1}`]??null);
+          const done=vals.filter(v=>v!==null).length,hits=vals.filter(v=>v!==null).reduce((a,b)=>a+b,0);
+          const pct=done>0?Math.round(hits/(done*5)*100):null;
+          return(
+            <button key={s.id} onClick={()=>setTirModal(s.id)} style={{background:"#0d1525",border:`1px solid ${done>0?"#1e4d8c":"#1e293b"}`,borderRadius:10,padding:"10px 12px",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:10}}>
+              <div style={{flex:1}}>
+                <div style={{color:"#f1f5f9",fontWeight:700,fontSize:14}}>{s.nom} <span style={{color:"#94a3b8",fontWeight:400}}>{s.prenom}</span></div>
+                {done>0&&<div style={{display:"flex",gap:6,marginTop:4,flexWrap:"wrap"}}>{vals.map((v,i)=><span key={i} style={{fontSize:12,color:v===null?"#334155":v>=4?"#22c55e":v>=2?"#f59e0b":"#ef4444",background:"#0a1428",border:"1px solid #1e293b",borderRadius:4,padding:"2px 6px",fontWeight:600}}>T{i+1}:{v===null?"—":`${v}/5`}</span>)}</div>}
+              </div>
+              <div style={{textAlign:"right",minWidth:52}}>
+                {done===0?<span style={{color:"#334155",fontSize:12}}>—</span>:<><div style={{color:pct>=60?"#22c55e":pct>=33?"#f59e0b":"#ef4444",fontWeight:700,fontSize:18}}>{hits}/{done*5}</div><div style={{color:"#64748b",fontSize:11}}>{pct}%</div></>}
+              </div>
+              <span style={{color:"#334155",fontSize:16}}>›</span>
+            </button>
+          );
+        })}
+      </div>
+      {withData.length>0&&<div style={{marginTop:12,background:"#0a1428",border:"1px solid #1e3a5f",borderRadius:10,padding:"12px 16px",display:"flex",gap:16,alignItems:"center",flexWrap:"wrap"}}><div><div style={{color:"#94a3b8",fontSize:11}}>SAISIS</div><div style={{color:"#60a5fa",fontWeight:700,fontSize:20}}>{withData.length}/{active.length}</div></div><div><div style={{color:"#94a3b8",fontSize:11}}>MOY. CLASSE</div><div style={{color:"#f59e0b",fontWeight:700,fontSize:20}}>{Math.round(totalHits/(withData.length*session.tirs*5)*100)}%</div></div></div>}
+    </>
+  );
+}
+
+// ─── COURSE TAB ──────────────────────────────────────────────────────────────
+function CourseTab({session,sessionId,getStatus,getTir,raceData,updateRaceData,shooting}){
+  const [showSetup,setShowSetup]=useState(false);
+  const rd=raceData[sessionId]||{waves:[]};
+  const isRace=session.type==="race"||session.type==="eval";
+
+  if(!isRace) return <div style={{background:"#0d1525",border:"1px solid #1e293b",borderRadius:10,padding:20,textAlign:"center",color:"#475569"}}><div style={{fontSize:40,marginBottom:8}}>🏃</div><div>Pas de course pour <strong style={{color:"#94a3b8"}}>{session.label}</strong></div></div>;
+
+  const presentStudents=STUDENTS.filter(s=>{const st=getStatus(sessionId,s.id)||(s.defaultStatus!=="normal"?s.defaultStatus:"");return st!=="ABS";});
+  const assignedIds=new Set(rd.waves.flatMap(w=>w.studentIds));
+  const unassigned=presentStudents.filter(s=>!assignedIds.has(s.id));
+  const saveRd=upd=>updateRaceData({...raceData,[sessionId]:upd});
+
+  const addWave=cfg=>{
+    const wave={id:Date.now().toString(),name:cfg.name||`Groupe ${rd.waves.length+1}`,studentIds:cfg.studentIds,startType:session.startType||"mass",startOffsets:cfg.startOffsets||{},startedAt:null,arrivals:{}};
+    saveRd({...rd,waves:[...rd.waves,wave]});
+  };
+  const updateWave=(wid,fn)=>saveRd({...rd,waves:rd.waves.map(w=>w.id===wid?fn(w):w)});
+  const deleteWave=wid=>{if(!window.confirm("Supprimer ce groupe ?"))return;saveRd({...rd,waves:rd.waves.filter(w=>w.id!==wid)});};
+
+  const infoBanner = {
+    staggered: {icon:"⏱",title:`Départs décalés · +${session.startInterval}s entre chaque coureur`,sub:"Ordre de départ à définir par groupe"+( session.penaltyType==="seconds" ? ` · +${session.penaltyPerMiss}s/cible manquée` : ""),penalty:session.penaltyType==="seconds"},
+    pursuit:   {icon:"🔄",title:"Poursuite · 1er à l'arrivée gagne",sub:"Écarts basés sur le Sprint précédent · Import automatique disponible"},
+    mass:      {icon:"🟢",title:"Mass Start · Départ groupé",sub:"Tous partent ensemble · 1er à franchir la ligne gagne"},
+  }[session.startType]||null;
+
+  return(
+    <div>
+      {infoBanner&&(
+        <div style={{background:"#0d1525",border:"1px solid #1e3a5f",borderRadius:10,padding:"12px 16px",marginBottom:12,display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
+          <span style={{fontSize:22}}>{infoBanner.icon}</span>
+          <div style={{flex:1}}>
+            <div style={{color:"#f1f5f9",fontWeight:600,fontSize:13}}>{infoBanner.title}</div>
+            <div style={{color:"#64748b",fontSize:12}}>{infoBanner.sub}</div>
+          </div>
+          {infoBanner.penalty&&<span style={{background:"#2d1a0a",color:"#f59e0b",border:"1px solid #b45309",borderRadius:6,padding:"4px 10px",fontSize:12,fontWeight:700}}>+{session.penaltyPerMiss}s / cible</span>}
+        </div>
+      )}
+      {rd.waves.map((wave,idx)=>(
+        <WaveCard key={wave.id} wave={wave} waveIndex={idx} session={session} presentStudents={presentStudents} shooting={shooting}
+          onUpdate={fn=>updateWave(wave.id,fn)} onDelete={()=>deleteWave(wave.id)}
+          onRename={name=>updateWave(wave.id,w=>({...w,name}))} />
+      ))}
+      {unassigned.length>0&&(
+        <button onClick={()=>setShowSetup(true)} style={{width:"100%",padding:16,background:"#0a1428",border:"2px dashed #1e3a5f",borderRadius:12,cursor:"pointer",color:"#3b82f6",fontSize:15,fontWeight:700,marginTop:8,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          <span style={{fontSize:22}}>＋</span> Nouveau groupe
+          <span style={{background:"#0f2d4c",color:"#60a5fa",fontSize:11,padding:"2px 8px",borderRadius:4}}>{unassigned.length} non affecté{unassigned.length>1?"s":""}</span>
+        </button>
+      )}
+      {showSetup&&<WaveSetupModal students={unassigned} waveNum={rd.waves.length+1} session={session} raceData={raceData} shooting={shooting} onConfirm={cfg=>{addWave(cfg);setShowSetup(false);}} onClose={()=>setShowSetup(false)} />}
+    </div>
+  );
+}
+
+// ─── WAVE CARD ───────────────────────────────────────────────────────────────
+function WaveCard({wave,waveIndex,session,presentStudents,shooting,onUpdate,onDelete,onRename}){
+  const [tick,setTick]=useState(0);
+  const [editingName,setEditingName]=useState(false);
+  const [draftName,setDraftName]=useState(wave.name);
+  const [showRes,setShowRes]=useState(false);
+
+  const students=presentStudents.filter(s=>wave.studentIds.includes(s.id));
+  const allArrived=wave.studentIds.length>0&&wave.studentIds.every(id=>wave.arrivals?.[id]);
+
+  useEffect(()=>{
+    if(!wave.startedAt||allArrived)return;
+    const id=setInterval(()=>setTick(t=>t+1),300);
+    return()=>clearInterval(id);
+  },[wave.startedAt,allArrived]);
+
+  const elapsed=wave.startedAt?(Date.now()-wave.startedAt)/1000:0;
+  const arrivedCount=Object.keys(wave.arrivals||{}).length;
+  const status=!wave.startedAt?"pending":allArrived?"done":"running";
+  const statusBorder={pending:"#1e3a5f",running:"#166534",done:"#1e4d8c"}[status];
+
+  const sortedStudents=session.startType==="staggered"
+    ?[...students].sort((a,b)=>(wave.startOffsets?.[a.id]??0)-(wave.startOffsets?.[b.id]??0))
+    :students;
+
+  const getTime=sid=>{
+    const arrival=wave.arrivals?.[sid];
+    if(!arrival||!wave.startedAt)return null;
+    const offset=wave.startOffsets?.[sid]??0;
+    const runSecs=(arrival-wave.startedAt)/1000-offset;
+    if(session.penaltyType==="seconds"){
+      const tir=shooting[session.id]?.[sid]??{};
+      let missed=0;
+      for(let i=1;i<=session.tirs;i++){const h=tir[`t${i}`];if(h!==null&&h!==undefined)missed+=5-h;}
+      return{runSecs,offset,missed,finalTime:runSecs+missed*(session.penaltyPerMiss||10)};
+    }
+    return{runSecs,offset,missed:null,finalTime:runSecs};
+  };
+
+  const results=sortedStudents.map(s=>({student:s,res:getTime(s.id)})).filter(x=>x.res!==null).sort((a,b)=>a.res.finalTime-b.res.finalTime);
+
+  const startWave=()=>{
+    if(wave.startedAt&&!window.confirm("Réinitialiser le départ ?"))return;
+    onUpdate(w=>({...w,startedAt:Date.now(),arrivals:{}}));
+  };
+  const recordArrival=sid=>{
+    if(wave.arrivals?.[sid]){if(!window.confirm("Annuler l'arrivée ?"))return;onUpdate(w=>{const a={...w.arrivals};delete a[sid];return{...w,arrivals:a};});}
+    else onUpdate(w=>({...w,arrivals:{...w.arrivals,[sid]:Date.now()}}));
+  };
+
+  return(
+    <div style={{background:"#0d1525",border:`2px solid ${statusBorder}`,borderRadius:12,marginBottom:12,overflow:"hidden"}}>
+      <div style={{background:status==="running"?"#0a1e0a":status==="done"?"#0a1630":"#0d1d35",padding:"12px 16px",display:"flex",alignItems:"center",gap:10}}>
+        <div style={{flex:1}}>
+          {editingName?(
+            <input value={draftName} onChange={e=>setDraftName(e.target.value)} autoFocus
+              onBlur={()=>{onRename(draftName);setEditingName(false);}}
+              onKeyDown={e=>{if(e.key==="Enter"){onRename(draftName);setEditingName(false);}}}
+              style={{background:"#0f2d4c",border:"1px solid #3b82f6",borderRadius:6,color:"#f1f5f9",padding:"4px 8px",fontSize:15,fontWeight:700,width:"100%"}} />
+          ):(
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{color:"#f1f5f9",fontWeight:700,fontSize:16}}>{wave.name}</span>
+              <button onClick={()=>setEditingName(true)} style={{background:"none",border:"none",color:"#475569",cursor:"pointer",fontSize:12}}>✏️</button>
+              <span style={{background:statusBorder+"40",color:status==="running"?"#4ade80":status==="done"?"#60a5fa":"#64748b",fontSize:11,padding:"2px 7px",borderRadius:4,fontWeight:700}}>
+                {status==="pending"?"En attente":status==="running"?"🔴 EN COURSE":"✓ Terminé"}
+              </span>
+            </div>
+          )}
+          <div style={{color:"#64748b",fontSize:12,marginTop:2}}>{students.length} coureur{students.length>1?"s":""}{wave.startedAt&&` · Départ ${new Date(wave.startedAt).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}`}</div>
+        </div>
+        <button onClick={onDelete} style={{background:"transparent",border:"none",color:"#334155",cursor:"pointer",fontSize:18,padding:"4px 8px"}}>✕</button>
+      </div>
+
+      {wave.startedAt&&(
+        <div style={{background:"#050c18",padding:"10px 16px",display:"flex",alignItems:"center",gap:12,borderBottom:"1px solid #1e293b"}}>
+          <span style={{fontSize:18}}>⏱</span>
+          <div style={{fontFamily:"monospace",fontSize:28,fontWeight:700,color:status==="running"?"#4ade80":"#60a5fa",letterSpacing:2}}>{fmtTime(elapsed)}</div>
+          <div style={{flex:1}}/>
+          <span style={{color:"#475569",fontSize:12}}>{arrivedCount}/{students.length} arrivé{arrivedCount>1?"s":""}</span>
+        </div>
+      )}
+
+      <div style={{padding:"12px 16px"}}>
+        {!wave.startedAt?(
+          <div style={{marginBottom:12}}>
+            {sortedStudents.map((s,idx)=>{
+              const offset=wave.startOffsets?.[s.id]??0;
+              return(
+                <div key={s.id} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",background:"#0a1428",border:"1px solid #1e293b",borderRadius:8,marginBottom:6}}>
+                  {session.startType!=="mass"&&<div style={{width:24,height:24,borderRadius:"50%",background:"#0f2d4c",border:"1px solid #1e4d8c",display:"flex",alignItems:"center",justifyContent:"center",color:"#60a5fa",fontWeight:700,fontSize:12,flexShrink:0}}>{idx+1}</div>}
+                  <span style={{color:"#f1f5f9",fontSize:14,flex:1}}>{s.nom} <span style={{color:"#94a3b8"}}>{s.prenom}</span></span>
+                  <span style={{color:offset>0?"#a78bfa":"#22c55e",fontFamily:"monospace",fontSize:13,fontWeight:700}}>{offset>0?"+":""}{fmtTime(offset)}</span>
+                </div>
+              );
+            })}
+          </div>
+        ):(
+          <div style={{marginBottom:12}}>
+            {sortedStudents.map(s=>{
+              const arrived=wave.arrivals?.[s.id];
+              const offset=wave.startOffsets?.[s.id]??0;
+              const rawSecs=arrived?(arrived-wave.startedAt)/1000:null;
+              const runSecs=rawSecs!==null?rawSecs-offset:null;
+              const missed=session.penaltyType==="seconds"?calcMissed(s.id,session.id,shooting):null;
+              const pen=missed!==null?missed*(session.penaltyPerMiss||10):0;
+              return(
+                <button key={s.id} onClick={()=>recordArrival(s.id)} style={{width:"100%",padding:"13px 14px",borderRadius:10,cursor:"pointer",border:`2px solid ${arrived?"#22c55e40":"#1e3a5f"}`,background:arrived?"#0f2a1a":"#0a1428",display:"flex",alignItems:"center",gap:12,textAlign:"left",marginBottom:6,WebkitTapHighlightColor:"transparent"}}>
+                  <div style={{flex:1}}>
+                    <span style={{color:arrived?"#4ade80":"#f1f5f9",fontWeight:700,fontSize:15}}>{s.nom} </span>
+                    <span style={{color:"#94a3b8",fontSize:14}}>{s.prenom}</span>
+                    {offset>0&&!arrived&&<div style={{color:"#a78bfa",fontSize:11,marginTop:2}}>départ +{fmtTime(offset)}</div>}
+                  </div>
+                  {arrived?(
+                    <div style={{textAlign:"right"}}>
+                      <div style={{color:"#4ade80",fontFamily:"monospace",fontWeight:700,fontSize:17}}>{fmtTime(runSecs)}</div>
+                      {missed!==null&&missed>0&&<div style={{color:"#f87171",fontSize:11}}>+{fmtTime(pen)} ({missed} raté{missed>1?"s":""})</div>}
+                      {missed===0&&<div style={{color:"#22c55e",fontSize:11}}>✓ 0 pénalité</div>}
+                    </div>
+                  ):(
+                    <div style={{background:"#0f2d4c",border:"1px solid #1e4d8c",borderRadius:8,padding:"8px 14px",color:"#3b82f6",fontWeight:700,fontSize:14}}>ARRIVÉE</div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        <button onClick={startWave} style={{width:"100%",padding:16,borderRadius:10,cursor:"pointer",fontWeight:700,fontSize:16,letterSpacing:1,background:!wave.startedAt?"linear-gradient(135deg,#166534,#15803d)":"#1e293b",color:!wave.startedAt?"#f0fdf4":"#64748b",border:!wave.startedAt?"2px solid #22c55e":"1px solid #334155",display:"flex",alignItems:"center",justifyContent:"center",gap:10}}>
+          {!wave.startedAt?<><span style={{fontSize:22}}>🚀</span>DÉPART</>:<><span style={{fontSize:16}}>↺</span> Réinitialiser</>}
+        </button>
+
+        {results.length>0&&(
+          <div style={{marginTop:12}}>
+            {status==="running"&&<button onClick={()=>setShowRes(v=>!v)} style={{width:"100%",padding:8,background:"#0a1428",border:"1px solid #1e3a5f",borderRadius:8,color:"#60a5fa",fontSize:13,cursor:"pointer",marginBottom:8}}>{showRes?"▲ Masquer":"▼ Voir"} classement partiel ({results.length})</button>}
+            {(status==="done"||showRes)&&<ResultsTable results={results} session={session} />}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── RESULTS TABLE ────────────────────────────────────────────────────────────
+function ResultsTable({results,session}){
+  const medals=["#f59e0b","#94a3b8","#b45309"];
+  return(
+    <div style={{background:"#060d1a",border:"1px solid #1e3a5f",borderRadius:10,overflow:"hidden"}}>
+      <div style={{padding:"10px 14px",background:"#0f1929",borderBottom:"1px solid #1e293b",display:"flex",alignItems:"center",gap:8}}>
+        <span style={{fontSize:16}}>🏆</span>
+        <span style={{color:"#f1f5f9",fontWeight:700,fontSize:14}}>Classement</span>
+        <span style={{color:session.penaltyType==="seconds"?"#f59e0b":"#22c55e",fontSize:11,marginLeft:"auto"}}>
+          {session.penaltyType==="seconds"?`temps net = brut + pénalités (+${session.penaltyPerMiss}s/cible)`:"1er à l'arrivée gagne"}
+        </span>
+      </div>
+      {results.map(({student,res},idx)=>{
+        const medal=medals[idx]||null;
+        const gap=idx>0?res.finalTime-results[0].res.finalTime:0;
+        return(
+          <div key={student.id} style={{padding:"10px 14px",borderBottom:idx<results.length-1?"1px solid #0f1929":"none",background:idx===0?"#0d1e0d":idx%2===0?"#060d1a":"#080f1e",display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:28,height:28,borderRadius:"50%",background:medal?medal+"30":"#0a1428",border:`2px solid ${medal||"#1e293b"}`,display:"flex",alignItems:"center",justifyContent:"center",color:medal||"#475569",fontWeight:700,fontSize:14,flexShrink:0}}>{idx+1}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{color:"#f1f5f9",fontWeight:700,fontSize:14,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{student.nom} {student.prenom}</div>
+              <div style={{display:"flex",gap:8,marginTop:2,flexWrap:"wrap"}}>
+                {res.offset>0&&<span style={{color:"#a78bfa",fontSize:11}}>départ +{fmtTime(res.offset)}</span>}
+                {session.penaltyType==="seconds"&&res.missed>0&&<span style={{color:"#ef4444",fontSize:11}}>{res.missed} raté{res.missed>1?"s":""} · +{fmtTime(res.missed*(session.penaltyPerMiss||10))}</span>}
+                {session.penaltyType==="seconds"&&res.missed===0&&<span style={{color:"#22c55e",fontSize:11}}>✓ 0 pénalité</span>}
+                {idx>0&&<span style={{color:"#64748b",fontSize:11}}>+{fmtTime(gap)}</span>}
+              </div>
+            </div>
+            <div style={{textAlign:"right"}}>
+              <div style={{fontFamily:"monospace",fontWeight:700,fontSize:18,color:idx===0?"#4ade80":"#f1f5f9"}}>{fmtTime(res.finalTime)}</div>
+              {session.penaltyType==="seconds"&&res.missed>0&&<div style={{color:"#64748b",fontSize:11,fontFamily:"monospace"}}>brut {fmtTime(res.runSecs)}</div>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── WAVE SETUP MODAL ────────────────────────────────────────────────────────
+function WaveSetupModal({students,waveNum,session,raceData,shooting,onConfirm,onClose}){
+  const [step,setStep]=useState(1);
+  const [selected,setSelected]=useState(students.map(s=>s.id));
+  const [name,setName]=useState(`Groupe ${waveNum}`);
+  const [order,setOrder]=useState([]);
+  const [offsets,setOffsets]=useState({});
+  const [importDone,setImportDone]=useState(false);
+
+  const selStudents=students.filter(s=>selected.includes(s.id));
+  const toggle=id=>setSelected(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]);
+
+  const goStep2=()=>{
+    if(session.startType==="mass"){onConfirm({studentIds:selected,name,startOffsets:{}});}
+    else if(session.startType==="staggered"){setOrder(selected.slice());setStep(2);}
+    else{setStep(2);}
+  };
+
+  const importFromPrev=()=>{
+    const prevId=session.prevSession;if(!prevId)return;
+    const ranking=getSessionRanking(prevId,raceData,shooting);
+    if(ranking.length===0){alert("Aucun résultat Sprint trouvé.");return;}
+    const best=ranking[0].finalTime;
+    const newOff={};
+    ranking.forEach(({studentId,finalTime})=>{if(selected.includes(studentId))newOff[studentId]=Math.round(finalTime-best);});
+    setOffsets(p=>({...p,...newOff}));setImportDone(true);
+  };
+
+  const moveUp=(idx)=>{if(idx===0)return;const a=[...order];[a[idx-1],a[idx]]=[a[idx],a[idx-1]];setOrder(a);};
+  const moveDown=(idx)=>{if(idx===order.length-1)return;const a=[...order];[a[idx],a[idx+1]]=[a[idx+1],a[idx]];setOrder(a);};
+
+  const confirm=()=>{
+    const startOffsets={};
+    if(session.startType==="staggered")order.forEach((id,i)=>{startOffsets[id]=i*session.startInterval;});
+    else if(session.startType==="pursuit")selected.forEach(id=>{startOffsets[id]=parseMMSS(offsets[id]||"0");});
+    onConfirm({studentIds:selected,name,startOffsets});
+  };
+
+  return(
+    <div style={{position:"fixed",inset:0,background:"#000000cc",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+      <div style={{background:"#0d1525",border:"2px solid #1e4d8c",borderRadius:16,padding:20,width:"100%",maxWidth:520,maxHeight:"90vh",overflowY:"auto"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
+          <div style={{flex:1,paddingRight:10}}>
+            <input value={name} onChange={e=>setName(e.target.value)} style={{background:"#0f2d4c",border:"1px solid #1e4d8c",borderRadius:6,color:"#f1f5f9",padding:"4px 8px",fontSize:17,fontWeight:700,width:"100%"}} />
+            <div style={{color:"#60a5fa",fontSize:12,marginTop:4}}>
+              {step===1?"Sélectionner les coureurs":session.startType==="staggered"?`Ordre de départ (+${session.startInterval}s entre chaque)`:session.startType==="pursuit"?"Décalages Poursuite":""}
+            </div>
+          </div>
+          <button onClick={onClose} style={{background:"#1e293b",color:"#94a3b8",border:"none",borderRadius:8,width:36,height:36,cursor:"pointer",fontSize:18,flexShrink:0}}>✕</button>
+        </div>
+
+        {step===1&&(
+          <>
+            <div style={{display:"flex",gap:8,marginBottom:12}}>
+              <button onClick={()=>setSelected(students.map(s=>s.id))} style={{flex:1,padding:"8px",background:"#0f2d4c",color:"#60a5fa",border:"1px solid #1e4d8c",borderRadius:6,cursor:"pointer",fontSize:13}}>Tous</button>
+              <button onClick={()=>setSelected([])} style={{flex:1,padding:"8px",background:"#1e293b",color:"#94a3b8",border:"1px solid #334155",borderRadius:6,cursor:"pointer",fontSize:13}}>Aucun</button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:16}}>
+              {students.map(s=>{
+                const on=selected.includes(s.id);
+                return(
+                  <button key={s.id} onClick={()=>toggle(s.id)} style={{padding:"10px 12px",borderRadius:8,cursor:"pointer",textAlign:"left",border:`2px solid ${on?"#3b82f6":"#1e293b"}`,background:on?"#0f2d4c":"#0a1428",display:"flex",alignItems:"center",gap:8,WebkitTapHighlightColor:"transparent"}}>
+                    <div style={{width:22,height:22,borderRadius:4,flexShrink:0,background:on?"#3b82f6":"#1e293b",border:`2px solid ${on?"#60a5fa":"#334155"}`,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:14}}>{on?"✓":""}</div>
+                    <div><div style={{color:"#f1f5f9",fontWeight:700,fontSize:13}}>{s.nom}</div><div style={{color:"#64748b",fontSize:11}}>{s.prenom}</div></div>
+                  </button>
+                );
+              })}
+            </div>
+            <button onClick={goStep2} disabled={selected.length===0} style={{width:"100%",padding:14,borderRadius:10,cursor:"pointer",fontWeight:700,fontSize:15,border:"none",background:selected.length===0?"#1e293b":"linear-gradient(135deg,#1e4d8c,#2563eb)",color:selected.length===0?"#334155":"#fff"}}>
+              {session.startType==="mass"?`Créer le groupe (${selected.length})`:`Suivant → Configurer les départs (${selected.length})`}
+            </button>
+          </>
+        )}
+
+        {step===2&&session.startType==="staggered"&&(
+          <>
+            <div style={{color:"#94a3b8",fontSize:13,marginBottom:12}}>Utilisez les flèches ▲▼ pour définir l'ordre. Les écarts de +{session.startInterval}s sont calculés automatiquement.</div>
+            <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:16}}>
+              {order.map((id,idx)=>{
+                const s=STUDENTS.find(st=>st.id===id);
+                return(
+                  <div key={id} style={{display:"flex",alignItems:"center",gap:10,background:"#0a1428",border:"1px solid #1e293b",borderRadius:8,padding:"10px 12px"}}>
+                    <div style={{width:28,height:28,borderRadius:"50%",background:"#0f2d4c",border:"1px solid #1e4d8c",display:"flex",alignItems:"center",justifyContent:"center",color:"#60a5fa",fontWeight:700,fontSize:13,flexShrink:0}}>{idx+1}</div>
+                    <div style={{flex:1}}><div style={{color:"#f1f5f9",fontWeight:600,fontSize:14}}>{s.nom} {s.prenom}</div></div>
+                    <div style={{fontFamily:"monospace",color:idx===0?"#22c55e":"#a78bfa",fontSize:14,fontWeight:700,minWidth:50,textAlign:"right"}}>{idx===0?"00:00":"+"+fmtTime(idx*session.startInterval)}</div>
+                    <div style={{display:"flex",flexDirection:"column",gap:3}}>
+                      <button onClick={()=>moveUp(idx)} disabled={idx===0} style={{background:"#0f2d4c",border:"1px solid #1e4d8c",borderRadius:4,color:"#60a5fa",cursor:"pointer",padding:"3px 8px",opacity:idx===0?0.3:1}}>▲</button>
+                      <button onClick={()=>moveDown(idx)} disabled={idx===order.length-1} style={{background:"#0f2d4c",border:"1px solid #1e4d8c",borderRadius:4,color:"#60a5fa",cursor:"pointer",padding:"3px 8px",opacity:idx===order.length-1?0.3:1}}>▼</button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setStep(1)} style={{flex:1,padding:12,background:"#1e293b",color:"#94a3b8",border:"1px solid #334155",borderRadius:8,cursor:"pointer",fontSize:14}}>← Retour</button>
+              <button onClick={confirm} style={{flex:2,padding:12,background:"linear-gradient(135deg,#166534,#15803d)",color:"#f0fdf4",border:"none",borderRadius:8,cursor:"pointer",fontWeight:700,fontSize:15}}>🚀 Créer le groupe</button>
+            </div>
+          </>
+        )}
+
+        {step===2&&session.startType==="pursuit"&&(
+          <>
+            {session.prevSession&&(
+              <button onClick={importFromPrev} style={{width:"100%",padding:"12px 16px",background:"#0a2a15",border:`2px solid ${importDone?"#22c55e":"#166534"}`,borderRadius:10,cursor:"pointer",color:importDone?"#4ade80":"#86efac",fontWeight:700,fontSize:14,marginBottom:12,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                {importDone?"✓ Écarts importés":"⬇ Importer depuis "+SESSIONS.find(s=>s.id===session.prevSession)?.label}
+              </button>
+            )}
+            <div style={{color:"#94a3b8",fontSize:12,marginBottom:10}}>Écart depuis le 1er (MM:SS). Le plus rapide part à 00:00.</div>
+            <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
+              {selStudents.map(s=>(
+                <div key={s.id} style={{display:"flex",alignItems:"center",gap:10,background:"#0a1428",border:"1px solid #1e293b",borderRadius:8,padding:"10px 12px"}}>
+                  <div style={{flex:1}}><div style={{color:"#f1f5f9",fontWeight:600,fontSize:14}}>{s.nom} {s.prenom}</div></div>
+                  <span style={{color:"#64748b",fontSize:12}}>+</span>
+                  <input type="text" placeholder="00:00" value={offsets[s.id]||""} onChange={e=>setOffsets(p=>({...p,[s.id]:e.target.value}))}
+                    style={{width:68,background:"#0f2d4c",border:"1px solid #1e4d8c",borderRadius:6,color:"#a78bfa",fontFamily:"monospace",fontSize:16,textAlign:"center",padding:"6px 8px",outline:"none"}} />
+                </div>
+              ))}
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setStep(1)} style={{flex:1,padding:12,background:"#1e293b",color:"#94a3b8",border:"1px solid #334155",borderRadius:8,cursor:"pointer",fontSize:14}}>← Retour</button>
+              <button onClick={confirm} style={{flex:2,padding:12,background:"linear-gradient(135deg,#166534,#15803d)",color:"#f0fdf4",border:"none",borderRadius:8,cursor:"pointer",fontWeight:700,fontSize:15}}>🚀 Créer le groupe</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── PROFIL TAB ──────────────────────────────────────────────────────────────
+function ProfilTab({profilId,setProfilId,raceData,shooting,getStatus}){
+  if(profilId!==null){
+    const student=STUDENTS.find(s=>s.id===profilId);
+    return <StudentProfile student={student} raceData={raceData} shooting={shooting} onBack={()=>setProfilId(null)} />;
+  }
+  return(
+    <>
+      <div style={{color:"#64748b",fontSize:12,marginBottom:12}}>Sélectionner un élève pour voir sa progression</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+        {STUDENTS.map(s=>{
+          const raceCount=RACE_SESSIONS_STATS.filter(rs=>getStudentResult(s.id,rs.id,raceData,shooting)!==null).length;
+          const tirCount=RACE_SESSIONS_STATS.filter(rs=>rs.tirs>0&&shooting[rs.id]?.[s.id]?.t1!==undefined).length;
+          return(
+            <button key={s.id} onClick={()=>setProfilId(s.id)} style={{background:"#0d1525",border:"1px solid #1e293b",borderRadius:10,padding:"12px 14px",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:10,WebkitTapHighlightColor:"transparent"}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{color:"#f1f5f9",fontWeight:700,fontSize:14,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{s.nom}</div>
+                <div style={{color:"#94a3b8",fontSize:12}}>{s.prenom}</div>
+                <div style={{display:"flex",gap:6,marginTop:4}}>
+                  {raceCount>0&&<span style={{color:"#60a5fa",fontSize:10,background:"#0f2d4c",borderRadius:3,padding:"1px 5px"}}>🏁 {raceCount}</span>}
+                  {tirCount>0&&<span style={{color:"#22c55e",fontSize:10,background:"#0f2a1a",borderRadius:3,padding:"1px 5px"}}>🎯 {tirCount}</span>}
+                  {raceCount===0&&tirCount===0&&<span style={{color:"#334155",fontSize:10}}>Aucune donnée</span>}
+                </div>
+              </div>
+              <span style={{color:"#334155",fontSize:18}}>›</span>
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+function StudentProfile({student,raceData,shooting,onBack}){
+  const [view,setView]=useState("course");
+
+  const raceRows=RACE_SESSIONS_STATS.filter(s=>s.distance).map(session=>{
+    const r=getStudentResult(student.id,session.id,raceData,shooting);
+    if(!r)return null;
+    const speedKmh=r.finalTime>0?r.finalTime>0?(session.distance/r.finalTime*3.6):null:null;
+    const paceSecPerKm=r.finalTime>0?(r.finalTime/(session.distance/1000)):null;
+    return{session,r,speedKmh,paceSecPerKm};
+  }).filter(Boolean);
+
+  const tirRows=RACE_SESSIONS_STATS.filter(s=>s.tirs>0).map(session=>{
+    const tir=shooting[session.id]?.[student.id];
+    if(!tir||tir.t1===undefined)return null;
+    const vals=Array.from({length:session.tirs},(_,i)=>tir[`t${i+1}`]??null);
+    const done=vals.filter(v=>v!==null).length,hits=vals.filter(v=>v!==null).reduce((a,b)=>a+b,0);
+    return{session,vals,hits,done,pct:done>0?Math.round(hits/(done*5)*100):null};
+  }).filter(Boolean);
+
+  const avgSpeed=raceRows.length>0?raceRows.reduce((a,r)=>a+(r.speedKmh||0),0)/raceRows.length:null;
+  const avgTir=tirRows.length>0?Math.round(tirRows.reduce((a,r)=>a+(r.pct||0),0)/tirRows.length):null;
+
+  // Progression: speed trend
+  const speedTrend=raceRows.length>=2?raceRows[raceRows.length-1].speedKmh-raceRows[0].speedKmh:null;
+
+  return(
+    <div>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
+        <button onClick={onBack} style={{background:"#0f2d4c",border:"1px solid #1e4d8c",borderRadius:8,color:"#60a5fa",padding:"8px 14px",cursor:"pointer",fontSize:14}}>← Retour</button>
+        <div>
+          <div style={{color:"#f1f5f9",fontWeight:700,fontSize:18}}>{student.nom} {student.prenom}</div>
+          <div style={{color:"#64748b",fontSize:12}}>#{student.id} · {student.defaultStatus!=="normal"?student.defaultStatus:"Étudiant"}</div>
+        </div>
+      </div>
+
+      {/* Summary */}
+      <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
+        {avgSpeed!==null&&(
+          <div style={{background:"#0f1e2d",border:"1px solid #1e4d8c",borderRadius:8,padding:"10px 14px",textAlign:"center",flex:1,minWidth:90}}>
+            <div style={{color:"#64748b",fontSize:10,marginBottom:2}}>VITESSE MOY.</div>
+            <div style={{color:"#60a5fa",fontWeight:700,fontSize:22}}>{avgSpeed.toFixed(1)}</div>
+            <div style={{color:"#64748b",fontSize:10}}>km/h</div>
+            {speedTrend!==null&&<div style={{color:speedTrend>=0?"#22c55e":"#ef4444",fontSize:11,marginTop:3}}>{speedTrend>=0?"↑+":"↓"}{Math.abs(speedTrend).toFixed(1)}</div>}
+          </div>
+        )}
+        {avgTir!==null&&(
+          <div style={{background:"#0f1e2d",border:"1px solid #1e4d8c",borderRadius:8,padding:"10px 14px",textAlign:"center",flex:1,minWidth:90}}>
+            <div style={{color:"#64748b",fontSize:10,marginBottom:2}}>PRÉCISION TIR</div>
+            <div style={{color:avgTir>=60?"#22c55e":avgTir>=40?"#f59e0b":"#ef4444",fontWeight:700,fontSize:22}}>{avgTir}%</div>
+            <div style={{color:"#64748b",fontSize:10}}>moyenne</div>
+          </div>
+        )}
+        <div style={{background:"#0f1e2d",border:"1px solid #1e4d8c",borderRadius:8,padding:"10px 14px",textAlign:"center",flex:1,minWidth:90}}>
+          <div style={{color:"#64748b",fontSize:10,marginBottom:2}}>COURSES</div>
+          <div style={{color:"#f1f5f9",fontWeight:700,fontSize:22}}>{raceRows.length}</div>
+          <div style={{color:"#64748b",fontSize:10}}>séances</div>
+        </div>
+      </div>
+
+      <div style={{display:"flex",gap:8,marginBottom:12}}>
+        {[{id:"course",l:"🏁 Courses",n:raceRows.length},{id:"tir",l:"🎯 Tir",n:tirRows.length}].map(t=>(
+          <button key={t.id} onClick={()=>setView(t.id)} style={{flex:1,padding:"10px 8px",borderRadius:8,cursor:"pointer",border:`2px solid ${view===t.id?"#3b82f6":"#1e293b"}`,background:view===t.id?"#0f2d4c":"#0a1428",color:view===t.id?"#60a5fa":"#64748b",fontWeight:700,fontSize:13}}>
+            {t.l} ({t.n})
+          </button>
+        ))}
+      </div>
+
+      {view==="course"&&(
+        raceRows.length===0?<div style={{textAlign:"center",color:"#475569",padding:24}}>Aucune course enregistrée</div>:
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {raceRows.map(({session,r,speedKmh,paceSecPerKm})=>{
+            const pm=paceSecPerKm?Math.floor(paceSecPerKm/60):null;
+            const ps=paceSecPerKm?Math.round(paceSecPerKm%60):null;
+            return(
+              <div key={session.id} style={{background:"#0d1525",border:"1px solid #1e3a5f",borderRadius:10,padding:"12px 14px"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                  <span style={{fontSize:18}}>{session.icon}</span>
+                  <div style={{flex:1}}>
+                    <div style={{color:"#f1f5f9",fontWeight:700,fontSize:14}}>{session.label}</div>
+                    <div style={{color:"#64748b",fontSize:11}}>{fmt(session.date)} · {(session.distance/1000).toFixed(2)} km</div>
+                  </div>
+                </div>
+                <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                  <div style={{background:"#0a1428",borderRadius:8,padding:"8px 12px",flex:1,minWidth:85}}>
+                    <div style={{color:"#64748b",fontSize:10}}>TEMPS NET</div>
+                    <div style={{color:"#4ade80",fontFamily:"monospace",fontWeight:700,fontSize:18}}>{fmtTime(r.finalTime)}</div>
+                    {session.penaltyType==="seconds"&&r.missed>0&&<div style={{color:"#f87171",fontSize:10}}>brut {fmtTime(r.runSecs)} +{r.missed}×{session.penaltyPerMiss}s</div>}
+                  </div>
+                  <div style={{background:"#0a1428",borderRadius:8,padding:"8px 12px",flex:1,minWidth:85}}>
+                    <div style={{color:"#64748b",fontSize:10}}>VITESSE</div>
+                    <div style={{color:"#60a5fa",fontWeight:700,fontSize:18}}>{speedKmh?speedKmh.toFixed(1):"—"}</div>
+                    <div style={{color:"#475569",fontSize:10}}>km/h</div>
+                  </div>
+                  <div style={{background:"#0a1428",borderRadius:8,padding:"8px 12px",flex:1,minWidth:85}}>
+                    <div style={{color:"#64748b",fontSize:10}}>ALLURE</div>
+                    <div style={{color:"#a78bfa",fontFamily:"monospace",fontWeight:700,fontSize:18}}>{pm!==null?`${pm}:${String(ps).padStart(2,"0")}`:"—"}</div>
+                    <div style={{color:"#475569",fontSize:10}}>min/km</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {view==="tir"&&(
+        tirRows.length===0?<div style={{textAlign:"center",color:"#475569",padding:24}}>Aucun résultat de tir</div>:
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {tirRows.map(({session,vals,hits,done,pct})=>(
+            <div key={session.id} style={{background:"#0d1525",border:`1px solid ${pct>=60?"#22c55e30":pct>=40?"#f59e0b30":"#ef444430"}`,borderRadius:10,padding:"12px 14px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                <span style={{fontSize:18}}>{session.icon}</span>
+                <div style={{flex:1}}><div style={{color:"#f1f5f9",fontWeight:700,fontSize:14}}>{session.label}</div><div style={{color:"#64748b",fontSize:11}}>{fmt(session.date)}</div></div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{color:pct>=60?"#22c55e":pct>=40?"#f59e0b":"#ef4444",fontWeight:700,fontSize:22}}>{pct}%</div>
+                  <div style={{color:"#64748b",fontSize:11}}>{hits}/{done*5}</div>
+                </div>
+              </div>
+              <div style={{background:"#0a1428",borderRadius:6,height:8,overflow:"hidden",marginBottom:8}}>
+                <div style={{height:"100%",width:`${pct}%`,background:pct>=60?"#22c55e":pct>=40?"#f59e0b":"#ef4444",borderRadius:6}}/>
+              </div>
+              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                {vals.map((v,i)=>{
+                  const lbl=session.tirLabels[i];
+                  const c=v===5?"#22c55e":v>=3?"#f59e0b":v!==null?"#ef4444":"#334155";
+                  return(
+                    <div key={i} style={{background:"#0a1428",border:`1px solid ${c}40`,borderRadius:6,padding:"4px 8px",textAlign:"center",minWidth:46}}>
+                      <div style={{color:"#64748b",fontSize:10}}>{lbl==="C"?"🔵":"🟣"} T{i+1}</div>
+                      <div style={{color:c,fontWeight:700,fontSize:15}}>{v!==null?`${v}/5`:"—"}</div>
+                      <div style={{display:"flex",gap:2,justifyContent:"center",marginTop:2}}>
+                        {v!==null&&Array.from({length:5}).map((_,j)=><div key={j} style={{width:7,height:7,borderRadius:"50%",background:j<v?"#22c55e":"#1e293b"}}/>)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── TIR MODAL ───────────────────────────────────────────────────────────────
+function TirModal({student,session,tir,updateTir,onClose}){
+  const [local,setLocal]=useState(()=>{const init={};for(let i=1;i<=session.tirs;i++)init[`t${i}`]=tir[`t${i}`]??null;return init;});
+  const set=(k,v)=>{setLocal(p=>({...p,[k]:v}));updateTir(k,v);};
+  const hits=Object.values(local).filter(v=>v!==null).reduce((a,b)=>a+b,0);
+  const poss=Object.values(local).filter(v=>v!==null).length*5;
+  const pct=poss>0?Math.round(hits/poss*100):null;
+  return(
+    <div style={{position:"fixed",inset:0,background:"#000000cc",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+      <div style={{background:"#0d1525",border:"2px solid #1e4d8c",borderRadius:16,padding:20,width:"100%",maxWidth:480,maxHeight:"90vh",overflowY:"auto"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
+          <div><div style={{color:"#f1f5f9",fontWeight:700,fontSize:18}}>{student.nom} {student.prenom}</div><div style={{color:"#60a5fa",fontSize:13}}>{session.label}</div></div>
+          <button onClick={onClose} style={{background:"#1e293b",color:"#94a3b8",border:"none",borderRadius:8,width:36,height:36,cursor:"pointer",fontSize:18}}>✕</button>
+        </div>
+        {Array.from({length:session.tirs},(_,i)=>{
+          const k=`t${i+1}`,lbl=session.tirLabels[i],v=local[k];
+          const color=lbl==="C"?"#60a5fa":"#a78bfa",bg=lbl==="C"?"#0f2d4c":"#1c1040",brd=lbl==="C"?"#3b82f6":"#7c3aed";
+          return(
+            <div key={k} style={{marginBottom:16}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                <span style={{background:bg,color,border:`1px solid ${brd}`,borderRadius:6,padding:"4px 10px",fontSize:13,fontWeight:700}}>Tir {i+1} — {lbl==="C"?"🔵 Couché":"🟣 Debout"}</span>
+                {v!==null&&<span style={{color:v>=4?"#22c55e":v>=2?"#f59e0b":"#ef4444",fontWeight:700,fontSize:14}}>{v}/5</span>}
+              </div>
+              <div style={{display:"flex",gap:8}}>
+                {[null,0,1,2,3,4,5].map(n=>(
+                  <button key={n} onClick={()=>set(k,n)} style={{flex:1,padding:"12px 4px",borderRadius:8,cursor:"pointer",border:`2px solid ${v===n?brd:"#1e293b"}`,background:v===n?bg:"#0a1428",color:v===n?color:"#475569",fontWeight:700,fontSize:n===null?11:16}}>{n===null?"—":n}</button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+        {pct!==null&&<div style={{background:"#0a1428",border:"1px solid #1e3a5f",borderRadius:10,padding:"10px 14px",marginBottom:12,display:"flex",gap:16}}><div><div style={{color:"#64748b",fontSize:11}}>TOTAL</div><div style={{color:"#f1f5f9",fontWeight:700,fontSize:22}}>{hits}/{poss}</div></div><div><div style={{color:"#64748b",fontSize:11}}>PRÉCISION</div><div style={{fontWeight:700,fontSize:22,color:pct>=60?"#22c55e":pct>=33?"#f59e0b":"#ef4444"}}>{pct}%</div></div></div>}
+        <button onClick={onClose} style={{width:"100%",background:"#0f2d4c",color:"#60a5fa",border:"1px solid #3b82f6",borderRadius:10,padding:14,fontSize:15,fontWeight:700,cursor:"pointer"}}>✓ Valider</button>
+      </div>
+    </div>
+  );
+}
+
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<BiathlonApp />);
+  </script>
+</body>
+</html>
