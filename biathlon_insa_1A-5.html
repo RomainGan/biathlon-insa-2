@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Biathlon INSA"/>
+<title>Biathlon INSA 1A</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#0a0f1a;font-family:'Trebuchet MS',sans-serif;color:#f1f5f9;overscroll-behavior:none}
+button{cursor:pointer;font-family:inherit}
+input,select,textarea{font-family:inherit}
+::-webkit-scrollbar{display:none}
+.app{display:flex;flex-direction:column;max-width:900px;margin:0 auto;min-height:100vh}
+header{background:linear-gradient(135deg,#0f1e3d,#0d2444);border-bottom:2px solid #1e3a5f;padding:10px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100}
+.session-banner{background:#0d1d35;border-bottom:1px solid #1e3a5f;padding:8px 14px;display:flex;align-items:center;gap:10px}
+main{flex:1;overflow-y:auto;padding:12px 12px 80px}
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:900px;background:#0d1525;border-top:1px solid #1e3a5f;display:flex;z-index:200}
+.nav-btn{flex:1;padding:10px 2px 8px;border:none;background:transparent;border-top:3px solid transparent;display:flex;flex-direction:column;align-items:center;gap:2px}
+.nav-btn.active{background:#0f2d4c;border-top:3px solid #3b82f6}
+.nav-btn .nav-label{color:#475569;font-size:10px;font-weight:600}
+.nav-btn.active .nav-label{color:#60a5fa}
+.modal-bg{position:fixed;inset:0;background:#000d;z-index:500;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:#0d1525;border:2px solid #1e4d8c;border-radius:16px;padding:20px;width:100%;max-width:520px;max-height:88vh;overflow-y:auto}
+.btn-blue{background:#0f2d4c;color:#60a5fa;border:1px solid #3b82f6;border-radius:8px;padding:8px 14px;font-size:13px}
+.btn-gray{background:#1e293b;color:#94a3b8;border:1px solid #334155;border-radius:8px;padding:8px 14px;font-size:13px}
+.btn-red{background:#2a0f0f;color:#f87171;border:1px solid #ef4444;border-radius:8px;padding:8px 14px;font-size:13px}
+.flash{color:#4ade80;font-size:11px;padding:2px 7px;background:#0f4c2a;border-radius:4px;border:1px solid #22c55e}
+.sub-tabs{display:flex;gap:6px;margin-bottom:12px}
+.sub-tab{flex:1;padding:9px 6px;border-radius:8px;border:2px solid #1e293b;background:#0a1428;color:#64748b;font-weight:700;font-size:13px;text-align:center}
+.sub-tab.active{border-color:#3b82f6;background:#0f2d4c;color:#60a5fa}
+.progress-bar{background:#0a1428;border-radius:6px;height:8px;overflow:hidden}
+.progress-fill{height:100%;border-radius:6px}
+input[type=text],input[type=number]{background:#0f2d4c;border:1px solid #1e4d8c;border-radius:6px;color:#f1f5f9;padding:8px 10px;font-size:14px;outline:none;width:100%}
+textarea{background:#0f2d4c;border:1px solid #1e4d8c;border-radius:8px;color:#f1f5f9;padding:10px;font-size:13px;outline:none;width:100%;resize:none}
+select{background:#0f2d4c;color:#60a5fa;border:1px solid #1e4d8c;border-radius:6px;padding:6px 8px;font-size:13px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+// ─── DEFAULT STUDENTS ────────────────────────────────────────────────────────
+var DEFAULT_STUDENTS=[
+  {id:1,nom:"Antoine",prenom:"Clara",ds:"normal"},
+  {id:2,nom:"Baleydier",prenom:"Martial",ds:"normal"},
+  {id:3,nom:"Mouillart",prenom:"Coline",ds:"SHN"},
+  {id:4,nom:"Roux",prenom:"Manon",ds:"normal"},
+  {id:5,nom:"Antoine",prenom:"Solène",ds:"normal"},
+  {id:6,nom:"Duffour",prenom:"Clément",ds:"normal"},
+  {id:7,nom:"Dasque",prenom:"Camille",ds:"normal"},
+  {id:8,nom:"Boussaguet",prenom:"Antoine",ds:"normal"},
+  {id:9,nom:"Ollier",prenom:"Antoine",ds:"normal"},
+  {id:10,nom:"Alt",prenom:"Maxime",ds:"normal"},
+  {id:11,nom:"Molina-Jurkowski",prenom:"Dylan",ds:"normal"},
+  {id:12,nom:"Buhagiar-Le-Merer",prenom:"Clément",ds:"normal"},
+  {id:13,nom:"Genniaux",prenom:"Thaddius",ds:"normal"},
+  {id:14,nom:"Moine",prenom:"Timéo",ds:"normal"},
+  {id:15,nom:"Girond",prenom:"Fares",ds:"normal"},
+  {id:16,nom:"Rodriguez-Tanya",prenom:"Mariona",ds:"normal"},
+  {id:17,nom:"Levasseur",prenom:"Antoine",ds:"normal"},
+  {id:18,nom:"Steffen-Pedocchi",prenom:"Bruno",ds:"AMG"},
+  {id:19,nom:"Laiginhas-Vernier",prenom:"Aurore",ds:"normal"},
+  {id:20,nom:"Guirado",prenom:"Keanu",ds:"normal"},
+  {id:21,nom:"Besbes",prenom:"Melik",ds:"normal"},
+  {id:22,nom:"Barbe-Cazaubon",prenom:"Guilhem",ds:"normal"},
+  {id:23,nom:"Fonteneau",prenom:"Kelyan",ds:"normal"},
+  {id:24,nom:"Hoareau",prenom:"Gatien",ds:"normal"},
+  {id:25,nom:"Beltran",prenom:"Alexandre",ds:"normal"},
+  {id:26,nom:"Durand-Mader-Cazot",prenom:"Raphaël",ds:"normal"},
+  {id:27,nom:"Machenaud",prenom:"Neven",ds:"normal"},
+  {id:28,nom:"Dufour",prenom:"Alexis",ds:"normal"},
+];
+
+var SESSIONS=[
+  {id:"S1",date:"2026-01-28",label:"S1 – Foncier",type:"training",desc:"30' Continue + intro Tir Couché",tirs:0,icon:"🏃"},
+  {id:"S2",date:"2026-02-04",label:"S2 – Foncier",type:"training",desc:"2×15' + Tir Debout",tirs:0,icon:"🏃"},
+  {id:"S3",date:"2026-02-11",label:"S3 – Circuit Tir",type:"training",desc:"Circuit ×3 : Course / Renfo / Tir (6' chaque)",tirs:0,icon:"🎯"},
+  {id:"S4",date:"2026-02-18",label:"S4 – Individuel",type:"race",desc:"5 tours × 500 m · 4 tirs C/D/C/D · Pénalité +10s/cible",tirs:4,tirLabels:["C","D","C","D"],icon:"🏅",startType:"staggered",startInterval:10,distance:2500,penaltyType:"seconds",penaltyPerMiss:10},
+  {id:"S5",date:"2026-02-25",label:"S5 – Sprint",type:"race",desc:"3 tours × 416 m · 2 tirs C/D · Pénalité boucle 30m · 1er à l'arrivée gagne",tirs:2,tirLabels:["C","D"],icon:"⚡",startType:"staggered",startInterval:10,distance:1248,penaltyType:"none"},
+  {id:"VAC1",date:"2026-03-04",label:"🌴 VACANCES",type:"break",desc:""},
+  {id:"S6",date:"2026-03-11",label:"S6 – Poursuite",type:"race",desc:"5 tours × 375 m · 4 tirs C/C/D/D · Départs écalés selon Sprint · 1er gagne",tirs:4,tirLabels:["C","C","D","D"],icon:"🎯",startType:"pursuit",prevSession:"S5",distance:1875,penaltyType:"none"},
+  {id:"VAC2",date:"2026-03-18",label:"🌴 VACANCES",type:"break",desc:""},
+  {id:"S7",date:"2026-03-25",label:"S7 – Mass Start Champ.",type:"race",desc:"5 tours × 187 m · 4 tirs C/C/D/D · Départ groupé · 1er gagne",tirs:4,tirLabels:["C","C","D","D"],icon:"🏆",startType:"mass",distance:935,penaltyType:"none"},
+  {id:"S8",date:"2026-04-01",label:"S8 – Mass Start Équipe",type:"race",desc:"3 tours × 330 m · 2 tirs C/D · Départ groupé · 1er gagne",tirs:2,tirLabels:["C","D"],icon:"👥",startType:"mass",distance:990,penaltyType:"none"},
+  {id:"S9",date:"2026-04-08",label:"S9 – Run & Bike",type:"training",desc:"Bike & Run + Tir (30'+30') · 2 groupes de 10 max",tirs:0,icon:"🚴"},
+  {id:"S10",date:"2026-04-15",label:"S10 – Sprint",type:"race",desc:"3 tours × 416 m · 2 tirs C/D · Pénalité boucle 30m · 1er gagne",tirs:2,tirLabels:["C","D"],icon:"⚡",startType:"staggered",startInterval:10,distance:1248,penaltyType:"none"},
+  {id:"VAC3",date:"2026-04-22",label:"🌴 VACANCES",type:"break",desc:""},
+  {id:"VAC4",date:"2026-04-29",label:"🌴 VACANCES",type:"break",desc:""},
+  {id:"S11",date:"2026-05-06",label:"S11 – Mass Start Champ.",type:"race",desc:"5 tours × 187 m · 4 tirs C/C/D/D · Départ groupé · 1er gagne",tirs:4,tirLabels:["C","C","D","D"],icon:"🏆",startType:"mass",distance:935,penaltyType:"none"},
+  {id:"S12",date:"2026-05-13",label:"S12 – ÉVALUATION 🏁",type:"eval",desc:"Course Indiv : 4 tirs C/D/C/D · pénalité +30s/cible · départs décalés 10s",tirs:4,tirLabels:["C","D","C","D"],icon:"📋",startType:"staggered",startInterval:10,distance:2000,penaltyType:"seconds",penaltyPerMiss:30},
+];
+
+var TODAY=new Date().toISOString().slice(0,10);
+
+var STATUS_CFG={
+  "":{label:"—",bg:"#1e293b",text:"#64748b",border:"#334155"},
+  P:{label:"✓",bg:"#0f4c2a",text:"#4ade80",border:"#22c55e"},
+  ABS:{label:"✗",bg:"#4c0f0f",text:"#f87171",border:"#ef4444"},
+  RET:{label:"↩",bg:"#3b2506",text:"#fb923c",border:"#f97316"},
+  SHN:{label:"SHN",bg:"#0f2d4c",text:"#60a5fa",border:"#3b82f6"},
+  AMG:{label:"AMG",bg:"#2d0f4c",text:"#c084fc",border:"#a855f7"},
+};
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function fmt(d){var p=d.split("-");return p[2]+"/"+p[1]+"/"+p[0];}
+function fmtShort(d){var p=d.split("-");return p[2]+"/"+p[1];}
+function fmtTime(s){
+  if(s===null||s===undefined||isNaN(s)||s<0)return"--:--";
+  var abs=Math.round(s),m=Math.floor(abs/60),hh=Math.floor(m/60);
+  if(hh>0)return hh+":"+pad(m%60)+":"+pad(abs%60);
+  return pad(m)+":"+pad(abs%60);
+}
+function pad(n){return n<10?"0"+n:String(n);}
+function parseMMSS(str){
+  if(!str||!str.trim())return 0;
+  var p=str.trim().split(":");
+  return p.length===2?(parseInt(p[0])||0)*60+(parseInt(p[1])||0):(parseFloat(str)||0);
+}
+function flatArr(arr){var r=[];(function f(a){for(var i=0;i<a.length;i++){if(Array.isArray(a[i]))f(a[i]);else r.push(a[i]);}})(arr);return r;}
+function h(tag,attrs){
+  var el=document.createElement(tag);
+  var children=Array.prototype.slice.call(arguments,2);
+  if(attrs){
+    var keys=Object.keys(attrs);
+    for(var ki=0;ki<keys.length;ki++){
+      var k=keys[ki],v=attrs[k];
+      if(k==="style"&&typeof v==="object"){var sk=Object.keys(v);for(var si=0;si<sk.length;si++)el.style[sk[si]]=v[sk[si]];}
+      else if(k==="className")el.className=v;
+      else if(k.slice(0,2)==="on")el.addEventListener(k.slice(2).toLowerCase(),v);
+      else el.setAttribute(k,v);
+    }
+  }
+  flatArr(children).forEach(function(c){
+    if(c!==null&&c!==undefined&&c!==false)
+      el.appendChild(typeof c==="string"||typeof c==="number"?document.createTextNode(c):c);
+  });
+  return el;
+}
+function d(style){var el=document.createElement("div");if(style){var sk=Object.keys(style);for(var i=0;i<sk.length;i++)el.style[sk[i]]=style[sk[i]];}return el;}
+function txt(s){return document.createTextNode(s);}
+
+// ─── STORAGE ─────────────────────────────────────────────────────────────────
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+function load(k,fb){try{var r=localStorage.getItem(k);return r!==null?JSON.parse(r):fb;}catch(e){return fb;}}
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+var STUDENTS=load("students",DEFAULT_STUDENTS);
+
+var state={
+  tab:"appel",
+  sessionId:findCurrentSession(),
+  courseSubTab:"course",
+  attendance:load("att",{}),
+  shooting:load("sho",{}),
+  raceData:load("raceData",{}),
+  warmup:load("warmup",{}),
+  notes:load("notes",{}),
+  profilId:null,
+  tirModal:null,
+  waveSetup:null,
+  expandedSess:null,
+  addStudentModal:false,
+  saveFlash:false,
+  _profilView:"course",
+};
+var chronoIntervals={};
+
+function getRaceSessions(){return SESSIONS.filter(function(s){return s.type!=="break";});}
+
+function findCurrentSession(){
+  var rs=SESSIONS.filter(function(s){return s.type!=="break";});
+  var best=rs[0];
+  for(var i=0;i<rs.length;i++){if(rs[i].date<=TODAY)best=rs[i];}
+  return best.id;
+}
+
+function setState(patch){
+  var keys=Object.keys(patch);
+  for(var i=0;i<keys.length;i++)state[keys[i]]=patch[keys[i]];
+  render();
+}
+function flash(){setState({saveFlash:true});setTimeout(function(){setState({saveFlash:false});},700);}
+
+// ─── DATA HELPERS ────────────────────────────────────────────────────────────
+function getStatus(sId,stId){return((state.attendance[sId]||{})[stId])||"";}
+function getTir(sId,stId){return((state.shooting[sId]||{})[stId])||{};}
+
+function cycleStatus(stId){
+  var st=STUDENTS.find(function(s){return s.id===stId;});
+  var cycle=st.ds==="SHN"?["SHN","P","ABS","RET"]:st.ds==="AMG"?["AMG","P","ABS","RET"]:["","P","ABS","RET"];
+  var cur=getStatus(state.sessionId,stId);
+  var idx=cycle.indexOf(cur);
+  var next=cycle[(idx+1)%cycle.length];
+  var att=Object.assign({},state.attendance);
+  att[state.sessionId]=Object.assign({},att[state.sessionId]||{});
+  att[state.sessionId][stId]=next;
+  save("att",att);
+  setState({attendance:att});
+  flash();
+}
+
+function setTir(stId,key,val){
+  var sId=state.sessionId;
+  var sho=Object.assign({},state.shooting);
+  sho[sId]=Object.assign({},sho[sId]||{});
+  sho[sId][stId]=Object.assign({},sho[sId][stId]||{});
+  sho[sId][stId][key]=val;
+  save("sho",sho);
+  setState({shooting:sho});
+}
+
+function calcMissed(stId,sId){
+  var session=SESSIONS.find(function(s){return s.id===sId;});
+  if(!session||!session.tirs)return null;
+  var tir=getTir(sId,stId);
+  var missed=0,hasData=false;
+  for(var i=1;i<=session.tirs;i++){var v=tir["t"+i];if(v!==null&&v!==undefined){missed+=5-v;hasData=true;}}
+  return hasData?missed:null;
+}
+
+function getStudentResult(stId,sId){
+  var session=SESSIONS.find(function(s){return s.id===sId;});
+  var rd=state.raceData[sId];
+  if(!rd||!session)return null;
+  for(var wi=0;wi<rd.waves.length;wi++){
+    var wave=rd.waves[wi];
+    if(wave.studentIds.indexOf(stId)<0)continue;
+    // Manual entry mode
+    if(wave.manualTimes&&wave.manualTimes[stId]!==undefined){
+      var rawSecs=wave.manualTimes[stId];
+      var offset=(wave.startOffsets||{})[stId]||0;
+      var runSecs=rawSecs-offset;
+      if(session.penaltyType==="seconds"){
+        var missed=calcMissed(stId,sId)||0;
+        return{runSecs:runSecs,offset:offset,missed:missed,finalTime:runSecs+missed*(session.penaltyPerMiss||10),manual:true};
+      }
+      return{runSecs:runSecs,offset:offset,missed:null,finalTime:runSecs,manual:true};
+    }
+    // Live timing
+    var arrival=(wave.arrivals||{})[stId];
+    if(!arrival||!wave.startedAt)return null;
+    var offset2=(wave.startOffsets||{})[stId]||0;
+    var runSecs2=(arrival-wave.startedAt)/1000-offset2;
+    if(session.penaltyType==="seconds"){
+      var missed2=calcMissed(stId,sId)||0;
+      return{runSecs:runSecs2,offset:offset2,missed:missed2,finalTime:runSecs2+missed2*(session.penaltyPerMiss||10),manual:false};
+    }
+    return{runSecs:runSecs2,offset:offset2,missed:null,finalTime:runSecs2,manual:false};
+  }
+  return null;
+}
+
+function getSessionRanking(sId){
+  var rd=state.raceData[sId];
+  if(!rd)return[];
+  var rows=[];
+  for(var wi=0;wi<rd.waves.length;wi++){
+    var wave=rd.waves[wi];
+    for(var si=0;si<wave.studentIds.length;si++){
+      var sid=wave.studentIds[si];
+      var r=getStudentResult(sid,sId);
+      if(r)rows.push(Object.assign({studentId:sid},r));
+    }
+  }
+  return rows.sort(function(a,b){return a.finalTime-b.finalTime;});
+}
+
+function saveRd(sId,rd){
+  var raceData=Object.assign({},state.raceData);
+  raceData[sId]=rd;
+  save("raceData",raceData);
+  setState({raceData:raceData});
+  flash();
+}
+
+function updateWave(waveId,fn){
+  var sId=state.sessionId;
+  var rd=state.raceData[sId]||{waves:[]};
+  var waves=rd.waves.map(function(w){return w.id===waveId?fn(w):w;});
+  saveRd(sId,Object.assign({},rd,{waves:waves}));
+}
+
+function getAttendanceRate(stId){
+  var raceSess=SESSIONS.filter(function(s){return s.type!=="break";});
+  var past=raceSess.filter(function(s){return s.date<=TODAY;});
+  if(!past.length)return null;
+  var present=past.filter(function(s){
+    var st=getStatus(s.id,stId);
+    return st==="P"||st==="SHN"||st==="AMG"||st==="RET";
+  });
+  return Math.round(present.length/past.length*100);
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function render(){
+  var root=document.getElementById("root");
+  root.innerHTML="";
+  root.appendChild(buildApp());
+  startChronos();
+}
+
+function startChronos(){
+  var ids=Object.keys(chronoIntervals);
+  for(var i=0;i<ids.length;i++)clearInterval(chronoIntervals[ids[i]]);
+  chronoIntervals={};
+  var sId=state.sessionId;
+  var rd=state.raceData[sId];
+  if(!rd||state.tab!=="course")return;
+  rd.waves.forEach(function(wave){
+    if(!wave.startedAt)return;
+    var allDone=wave.studentIds.every(function(id){return(wave.arrivals||{})[id];});
+    if(allDone)return;
+    var id=setInterval(function(){
+      var el2=document.getElementById("chrono-"+wave.id);
+      if(el2)el2.textContent=fmtTime((Date.now()-wave.startedAt)/1000);
+    },300);
+    chronoIntervals[wave.id]=id;
+  });
+}
+
+function buildApp(){
+  var session=SESSIONS.find(function(s){return s.id===state.sessionId;})||getRaceSessions()[0];
+  var present=0;
+  STUDENTS.forEach(function(s){
+    var st=getStatus(state.sessionId,s.id)||(s.ds!=="normal"?s.ds:"");
+    if(st==="P"||st==="SHN"||st==="AMG"||st==="RET")present++;
+  });
+
+  var app=h("div",{className:"app"});
+
+  // HEADER
+  var header=h("header",{});
+  header.appendChild(h("span",{style:{fontSize:"24px"}},"🎿"));
+  var hInfo=d({flex:"1"});
+  hInfo.appendChild(h("div",{style:{color:"#e2e8f0",fontWeight:"700",fontSize:"15px",letterSpacing:"1px"}},"BIATHLON — INSA 1A"));
+  hInfo.appendChild(h("div",{style:{color:"#60a5fa",fontSize:"11px"}},"Mercredi 16h–18h · "+present+" présents"));
+  header.appendChild(hInfo);
+  if(state.saveFlash)header.appendChild(h("span",{className:"flash"},"✓"));
+
+  var sel=h("select",{style:{maxWidth:"170px"},onChange:function(e){setState({sessionId:e.target.value});}});
+  getRaceSessions().forEach(function(s){
+    var o=h("option",{value:s.id},s.label+" ("+fmtShort(s.date)+")");
+    if(s.id===state.sessionId)o.selected=true;
+    sel.appendChild(o);
+  });
+  header.appendChild(sel);
+
+  // Gear button (student management)
+  var gearBtn=h("button",{style:{background:"transparent",border:"none",color:"#475569",fontSize:"20px",padding:"4px 6px"},onClick:function(){setState({addStudentModal:true});}});
+  gearBtn.textContent="⚙";
+  header.appendChild(gearBtn);
+  app.appendChild(header);
+
+  // SESSION BANNER
+  var startBadge=null;
+  if(session.startType==="mass")startBadge={bg:"#1a0f2d",color:"#c084fc",border:"#7c3aed",text:"🟢 MASS START"};
+  else if(session.startType==="pursuit")startBadge={bg:"#0d2d1a",color:"#4ade80",border:"#22c55e",text:"🔄 POURSUITE"};
+  else if(session.startType==="staggered")startBadge={bg:"#0f1e2d",color:"#60a5fa",border:"#3b82f6",text:"⏱ +"+session.startInterval+"s"};
+
+  var banner=h("div",{className:"session-banner"});
+  banner.appendChild(h("span",{style:{fontSize:"20px"}},session.icon||"📅"));
+  var bInfo=d({flex:"1"});
+  bInfo.appendChild(h("div",{style:{color:"#f1f5f9",fontWeight:"700",fontSize:"14px"}},session.label));
+  bInfo.appendChild(h("div",{style:{color:"#94a3b8",fontSize:"11px"}},session.desc));
+  banner.appendChild(bInfo);
+  if(startBadge){
+    banner.appendChild(h("span",{style:{background:startBadge.bg,color:startBadge.color,border:"1px solid "+startBadge.border,borderRadius:"6px",padding:"3px 9px",fontSize:"11px",fontWeight:"700",flexShrink:"0"}},startBadge.text));
+  }
+  app.appendChild(banner);
+
+  // MAIN
+  var main=h("main",{});
+  if(state.tab==="appel")main.appendChild(buildAppelTab(session));
+  else if(state.tab==="seances")main.appendChild(buildSeancesTab());
+  else if(state.tab==="course")main.appendChild(buildCourseTab(session));
+  else if(state.tab==="profil")main.appendChild(buildProfilTab());
+  app.appendChild(main);
+
+  // NAV
+  var nav=h("nav",{});
+  [["appel","📋","Appel"],["seances","📅","Séances"],["course","🏁","Course & Tir"],["profil","📊","Profils"]].forEach(function(item){
+    var id=item[0],icon=item[1],label=item[2];
+    var btn=h("button",{className:"nav-btn"+(state.tab===id?" active":""),onClick:function(){setState({tab:id});}});
+    btn.appendChild(h("span",{style:{fontSize:"18px"}},icon));
+    btn.appendChild(h("span",{className:"nav-label"},label));
+    nav.appendChild(btn);
+  });
+  app.appendChild(nav);
+
+  // MODALS
+  if(state.tirModal!==null)app.appendChild(buildTirModal(session));
+  if(state.waveSetup)app.appendChild(buildWaveSetupModal(session));
+  if(state.addStudentModal)app.appendChild(buildStudentManagerModal());
+
+  return app;
+}
+
+// ─── APPEL TAB ───────────────────────────────────────────────────────────────
+function buildAppelTab(){
+  var sId=state.sessionId;
+  var counts={"":0,P:0,ABS:0,RET:0,SHN:0,AMG:0};
+  STUDENTS.forEach(function(s){
+    var st=getStatus(sId,s.id)||(s.ds!=="normal"?s.ds:"");
+    counts[st]=(counts[st]||0)+1;
+  });
+  var present=counts.P+counts.SHN+counts.AMG+counts.RET;
+  var div=d({});
+
+  // Stats
+  var stats=d({display:"flex",gap:"8px",marginBottom:"12px"});
+  [[present,"Présents","#22c55e","#0f2a1a"],[counts.ABS,"Absents","#ef4444","#2a0f0f"],[counts[""],"Non saisi","#64748b","#1e293b"]].forEach(function(item){
+    var dd=d({flex:"1",background:item[3],border:"1px solid "+item[2]+"30",borderRadius:"8px",padding:"8px 12px",textAlign:"center"});
+    dd.appendChild(h("div",{style:{color:item[2],fontWeight:"700",fontSize:"22px"}},item[0]));
+    dd.appendChild(h("div",{style:{color:"#94a3b8",fontSize:"11px"}},item[1]));
+    stats.appendChild(dd);
+  });
+  div.appendChild(stats);
+
+  // Legend
+  var leg=d({display:"flex",gap:"6px",marginBottom:"10px",flexWrap:"wrap"});
+  Object.keys(STATUS_CFG).filter(function(k){return k!=="";}).forEach(function(k){
+    var v=STATUS_CFG[k];
+    leg.appendChild(h("span",{style:{background:v.bg,color:v.text,border:"1px solid "+v.border,borderRadius:"4px",padding:"2px 8px",fontSize:"11px",fontWeight:"600"}},v.label+" "+k));
+  });
+  leg.appendChild(h("span",{style:{color:"#475569",fontSize:"11px"}},"· Appuyer pour changer"));
+  div.appendChild(leg);
+
+  // Grid
+  var grid=d({display:"grid",gridTemplateColumns:"1fr 1fr",gap:"6px"});
+  STUDENTS.forEach(function(s){
+    var raw=getStatus(sId,s.id),st=raw||(s.ds!=="normal"?s.ds:""),cfg=STATUS_CFG[st]||STATUS_CFG[""];
+    var btn=h("button",{style:{background:cfg.bg,border:"2px solid "+cfg.border,borderRadius:"10px",padding:"10px 12px",display:"flex",alignItems:"center",gap:"10px",width:"100%",textAlign:"left"},onClick:function(id){return function(){cycleStatus(id);};}(s.id)});
+    var badge=d({width:"32px",height:"32px",borderRadius:"8px",background:cfg.bg,border:"1px solid "+cfg.border,display:"flex",alignItems:"center",justifyContent:"center",color:cfg.text,fontWeight:"700",fontSize:"12px",flexShrink:"0"});
+    badge.textContent=cfg.label;
+    var info=d({flex:"1",minWidth:"0"});
+    info.appendChild(h("div",{style:{color:"#f1f5f9",fontWeight:"700",fontSize:"13px",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},s.nom));
+    info.appendChild(h("div",{style:{color:cfg.text,fontSize:"12px"}},s.prenom));
+    btn.appendChild(badge);btn.appendChild(info);
+    grid.appendChild(btn);
+  });
+  div.appendChild(grid);
+  return div;
+}
+
+// ─── SEANCES TAB ─────────────────────────────────────────────────────────────
+function buildSeancesTab(){
+  var div=d({display:"flex",flexDirection:"column",gap:"6px"});
+  var sId=state.sessionId;
+
+  SESSIONS.forEach(function(s){
+    if(s.type==="break"){
+      var br=d({background:"#0f1929",border:"1px solid #1e293b",borderRadius:"8px",padding:"8px 14px",color:"#475569",fontSize:"13px",display:"flex",gap:"10px",alignItems:"center"});
+      br.appendChild(h("span",{},s.label));
+      br.appendChild(h("span",{style:{marginLeft:"auto",color:"#334155",fontSize:"12px"}},fmt(s.date)));
+      div.appendChild(br);return;
+    }
+    var isPast=s.date<TODAY,isCurrent=s.id===sId,isExp=state.expandedSess===s.id;
+    var tc=s.type==="eval"?"#f59e0b":s.type==="race"?"#3b82f6":"#22c55e";
+    var card=d({background:isCurrent?"#0f2d4c":isPast?"#0d1525":"#0a1428",border:"2px solid "+(isCurrent?"#3b82f6":isPast?"#1e293b":"#1e3a5f"),borderRadius:"10px",overflow:"hidden",opacity:isPast?"0.8":"1"});
+
+    // Row
+    var row=d({padding:"12px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:"10px"});
+    row.addEventListener("click",function(sid){return function(){setState({expandedSess:state.expandedSess===sid?null:sid});};}(s.id));
+    row.appendChild(h("span",{style:{fontSize:"20px"}},s.icon));
+    var info=d({flex:"1"});
+    var ttl=d({display:"flex",alignItems:"center",gap:"6px",flexWrap:"wrap"});
+    ttl.appendChild(h("span",{style:{color:"#f1f5f9",fontWeight:"700",fontSize:"14px"}},s.label));
+    if(isPast)ttl.appendChild(h("span",{style:{color:"#22c55e",fontSize:"11px"}},"✓"));
+    if(isCurrent)ttl.appendChild(h("span",{style:{background:"#1e4d8c",color:"#60a5fa",fontSize:"10px",padding:"1px 6px",borderRadius:"4px",fontWeight:"700"}},"EN COURS"));
+    info.appendChild(ttl);
+    info.appendChild(h("div",{style:{color:"#64748b",fontSize:"12px",marginTop:"2px"}},fmt(s.date)));
+    row.appendChild(info);
+    var meta=d({display:"flex",gap:"6px",alignItems:"center"});
+    if(s.tirs>0)meta.appendChild(h("span",{style:{background:tc+"20",color:tc,border:"1px solid "+tc+"60",borderRadius:"4px",padding:"2px 7px",fontSize:"11px",fontWeight:"600"}},s.tirs+" tirs"));
+    meta.appendChild(h("span",{style:{color:"#475569"}},isExp?"▲":"▼"));
+    row.appendChild(meta);
+    card.appendChild(row);
+
+    if(isExp){
+      var exp=d({borderTop:"1px solid #1e3a5f",padding:"14px 14px",background:"#080e1a"});
+      exp.appendChild(h("div",{style:{color:"#94a3b8",fontSize:"13px",marginBottom:"12px"}},s.desc));
+
+      // Tir labels
+      if(s.tirs>0){
+        var tls=d({display:"flex",gap:"6px",marginBottom:"12px",flexWrap:"wrap"});
+        s.tirLabels.forEach(function(lbl,i){
+          tls.appendChild(h("span",{style:{background:lbl==="C"?"#0f2d4c":"#1c1040",color:lbl==="C"?"#60a5fa":"#a78bfa",border:"1px solid "+(lbl==="C"?"#3b82f6":"#7c3aed"),borderRadius:"6px",padding:"4px 10px",fontSize:"12px",fontWeight:"700"}},"Tir "+(i+1)+" — "+(lbl==="C"?"Couché":"Debout")));
+        });
+        exp.appendChild(tls);
+      }
+
+      // Echauffement section
+      var wupData=state.warmup[s.id]||[];
+      var wupSect=d({background:"#0f1929",border:"1px solid #1e3a5f",borderRadius:"8px",padding:"10px 12px",marginBottom:"10px"});
+      wupSect.appendChild(h("div",{style:{color:"#f59e0b",fontWeight:"700",fontSize:"12px",marginBottom:"8px"}},"🏃 Responsables échauffement"));
+      var wupGrid=d({display:"flex",flexWrap:"wrap",gap:"6px",marginBottom:"6px"});
+      STUDENTS.forEach(function(st){
+        var isWup=wupData.indexOf(st.id)>=0;
+        var wbtn=h("button",{style:{padding:"5px 10px",borderRadius:"6px",border:"1px solid "+(isWup?"#f59e0b":"#334155"),background:isWup?"#2d1f00":"#0a1428",color:isWup?"#f59e0b":"#64748b",fontSize:"12px",fontWeight:isWup?"700":"400"},onClick:function(sid,sessId){return function(){
+          var cur=state.warmup[sessId]||[];
+          var next=cur.indexOf(sid)>=0?cur.filter(function(x){return x!==sid;}):[].concat(cur,[sid]);
+          var wu=Object.assign({},state.warmup);wu[sessId]=next;save("warmup",wu);setState({warmup:wu});
+        };}(st.id,s.id)});
+        wbtn.textContent=st.prenom;
+        wupGrid.appendChild(wbtn);
+      });
+      wupSect.appendChild(wupGrid);
+      if(wupData.length>0){
+        var names=wupData.map(function(id){var st=STUDENTS.find(function(x){return x.id===id;});return st?st.nom+" "+st.prenom:"?";}).join(", ");
+        wupSect.appendChild(h("div",{style:{color:"#f59e0b",fontSize:"12px",fontStyle:"italic"}},names));
+      }
+      exp.appendChild(wupSect);
+
+      // Notes
+      var noteData=state.notes[s.id]||"";
+      var noteSect=d({marginBottom:"12px"});
+      noteSect.appendChild(h("div",{style:{color:"#94a3b8",fontSize:"12px",fontWeight:"600",marginBottom:"5px"}},"📝 Remarques"));
+      var ta=h("textarea",{rows:"3",placeholder:"Notes sur la séance..."},noteData);
+      ta.addEventListener("input",function(sessId){return function(e){
+        var n=Object.assign({},state.notes);n[sessId]=e.target.value;save("notes",n);state.notes=n;
+      };}(s.id));
+      noteSect.appendChild(ta);
+      exp.appendChild(noteSect);
+
+      // Action buttons
+      var btnRow=d({display:"flex",gap:"8px"});
+      if(s.type==="race"||s.type==="eval"){
+        var goBtn=h("button",{style:{flex:"2",padding:"11px",background:"linear-gradient(135deg,#1e4d8c,#2563eb)",color:"#fff",border:"none",borderRadius:"8px",fontWeight:"700",fontSize:"14px"},onClick:function(sid){return function(){setState({sessionId:sid,tab:"course",expandedSess:null});};}(s.id)});
+        goBtn.textContent="🏁 Aller à la course";
+        btnRow.appendChild(goBtn);
+      }
+      if(!isCurrent){
+        var selBtn=h("button",{className:"btn-gray",style:{flex:"1",padding:"11px"},onClick:function(sid){return function(){setState({sessionId:sid,expandedSess:null});};}(s.id)});
+        selBtn.textContent="↩ Sélectionner";
+        btnRow.appendChild(selBtn);
+      }
+      exp.appendChild(btnRow);
+      card.appendChild(exp);
+    }
+    div.appendChild(card);
+  });
+  return div;
+}
+
+// ─── COURSE + TIR TAB ────────────────────────────────────────────────────────
+function buildCourseTab(session){
+  var div=d({});
+  var isRace=session.type==="race"||session.type==="eval";
+
+  // Sub-tabs
+  var subTabs=d({display:"flex",gap:"6px",marginBottom:"12px"});
+  [["course","🏁 Course"],["tir","🎯 Tir"]].forEach(function(item){
+    var btn=h("button",{className:"sub-tab"+(state.courseSubTab===item[0]?" active":""),onClick:function(id){return function(){setState({courseSubTab:id});};}(item[0])});
+    btn.textContent=item[1];
+    subTabs.appendChild(btn);
+  });
+  div.appendChild(subTabs);
+
+  if(state.courseSubTab==="tir")div.appendChild(buildTirSection(session));
+  else div.appendChild(buildCourseSection(session));
+  return div;
+}
+
+// ─── TIR SECTION ─────────────────────────────────────────────────────────────
+function buildTirSection(session){
+  var sId=state.sessionId;
+  var div=d({});
+  if(!session.tirs){
+    var box=d({background:"#0d1525",border:"1px solid #1e293b",borderRadius:"10px",padding:"24px",textAlign:"center",color:"#475569"});
+    box.appendChild(h("div",{style:{fontSize:"36px",marginBottom:"8px"}},"🎿"));
+    box.appendChild(h("div",{style:{fontSize:"14px"}},"Pas de tir pour "+session.label));
+    div.appendChild(box);return div;
+  }
+  // Tir structure header
+  var bar=d({background:"#0d1525",border:"1px solid #1e3a5f",borderRadius:"10px",padding:"10px 14px",marginBottom:"12px",display:"flex",flexWrap:"wrap",gap:"8px",alignItems:"center"});
+  session.tirLabels.forEach(function(lbl,i){
+    bar.appendChild(h("span",{style:{background:lbl==="C"?"#0f2d4c":"#1c1040",color:lbl==="C"?"#60a5fa":"#a78bfa",border:"1px solid "+(lbl==="C"?"#3b82f6":"#7c3aed"),borderRadius:"6px",padding:"4px 10px",fontSize:"12px",fontWeight:"700"}},"T"+(i+1)+" "+(lbl==="C"?"🔵 Couché":"🟣 Debout")));
+  });
+  bar.appendChild(h("span",{style:{color:"#64748b",fontSize:"12px",marginLeft:"auto"}},"5 balles/tir"));
+  div.appendChild(bar);
+
+  var rd=state.raceData[sId]||{waves:[]};
+  var presentStudents=STUDENTS.filter(function(s){var st=getStatus(sId,s.id)||(s.ds!=="normal"?s.ds:"");return st!=="ABS";});
+  var assignedIds={};
+  rd.waves.forEach(function(w){w.studentIds.forEach(function(id){assignedIds[id]=true;});});
+  var unassigned=presentStudents.filter(function(s){return!assignedIds[s.id];});
+
+  function makeTirRow(s){
+    var tir=getTir(sId,s.id);
+    var vals=[],hits=0,done=0;
+    for(var i=1;i<=session.tirs;i++){var v=tir["t"+i];vals.push(v!==undefined?v:null);if(v!==null&&v!==undefined){done++;hits+=v;}}
+    var pct=done>0?Math.round(hits/(done*5)*100):null;
+    var btn=h("button",{style:{background:"#0a1428",border:"1px solid "+(done>0?"#1e4d8c":"#1e293b"),borderRadius:"10px",padding:"10px 12px",display:"flex",alignItems:"center",gap:"10px",width:"100%",textAlign:"left"},onClick:function(id){return function(){setState({tirModal:id});};}(s.id)});
+    var info=d({flex:"1"});
+    var nm=d({});nm.appendChild(h("span",{style:{color:"#f1f5f9",fontWeight:"700",fontSize:"14px"}},s.nom+" "));nm.appendChild(h("span",{style:{color:"#94a3b8",fontSize:"13px"}},s.prenom));info.appendChild(nm);
+    if(done>0){
+      var chips=d({display:"flex",gap:"5px",marginTop:"4px",flexWrap:"wrap"});
+      vals.forEach(function(v,i){chips.appendChild(h("span",{style:{fontSize:"12px",color:v===null?"#334155":v>=4?"#22c55e":v>=2?"#f59e0b":"#ef4444",background:"#0d1525",border:"1px solid #1e293b",borderRadius:"4px",padding:"2px 6px",fontWeight:"600"}},"T"+(i+1)+":"+(v===null?"—":v+"/5")));});
+      info.appendChild(chips);
+    }
+    var score=d({textAlign:"right",minWidth:"52px"});
+    if(done===0)score.appendChild(h("span",{style:{color:"#334155",fontSize:"12px"}},"—"));
+    else{score.appendChild(h("div",{style:{color:pct>=60?"#22c55e":pct>=33?"#f59e0b":"#ef4444",fontWeight:"700",fontSize:"18px"}},hits+"/"+(done*5)));score.appendChild(h("div",{style:{color:"#64748b",fontSize:"11px"}},pct+"%"));}
+    btn.appendChild(info);btn.appendChild(score);btn.appendChild(h("span",{style:{color:"#334155",fontSize:"16px"}},"›"));
+    return btn;
+  }
+
+  // Render by wave groups
+  rd.waves.forEach(function(wave){
+    var waveStudents=presentStudents.filter(function(s){return wave.studentIds.indexOf(s.id)>=0;});
+    if(!waveStudents.length)return;
+    var doneCount=waveStudents.filter(function(s){return getTir(sId,s.id).t1!==undefined;}).length;
+    var allDone=doneCount===waveStudents.length;
+    var wcard=d({background:"#0d1525",border:"1px solid "+(allDone?"#1e4d8c":"#1e3a5f"),borderRadius:"12px",marginBottom:"12px",overflow:"hidden"});
+    var whdr=d({background:"#0d1d35",padding:"10px 14px",display:"flex",alignItems:"center",gap:"10px",borderBottom:"1px solid #1e293b"});
+    whdr.appendChild(h("span",{style:{color:"#f1f5f9",fontWeight:"700",fontSize:"15px"}},wave.name));
+    whdr.appendChild(h("span",{style:{color:"#64748b",fontSize:"12px"}},waveStudents.length+" coureurs"));
+    whdr.appendChild(h("span",{style:{marginLeft:"auto",color:allDone&&doneCount>0?"#22c55e":"#f59e0b",fontSize:"12px",fontWeight:"700"}},doneCount+"/"+waveStudents.length+" saisis"));
+    wcard.appendChild(whdr);
+    var wbody=d({padding:"10px 12px",display:"flex",flexDirection:"column",gap:"6px"});
+    waveStudents.forEach(function(s){wbody.appendChild(makeTirRow(s));});
+    wcard.appendChild(wbody);
+    div.appendChild(wcard);
+  });
+
+  // Unassigned
+  if(unassigned.length>0){
+    var ucard=d({background:"#0d1525",border:"1px dashed #334155",borderRadius:"12px",marginBottom:"12px",overflow:"hidden"});
+    var uhdr=d({background:"#080e1a",padding:"10px 14px",display:"flex",alignItems:"center",gap:"10px",borderBottom:"1px solid #1e293b"});
+    uhdr.appendChild(h("span",{style:{color:"#64748b",fontWeight:"700",fontSize:"14px"}},"Sans groupe"));
+    uhdr.appendChild(h("span",{style:{color:"#475569",fontSize:"12px"}},unassigned.length+" élèves"));
+    ucard.appendChild(uhdr);
+    var ubody=d({padding:"10px 12px",display:"flex",flexDirection:"column",gap:"6px"});
+    unassigned.forEach(function(s){ubody.appendChild(makeTirRow(s));});
+    ucard.appendChild(ubody);
+    div.appendChild(ucard);
+  }
+
+  if(!rd.waves.length&&!unassigned.length){
+    div.appendChild(h("div",{style:{textAlign:"center",color:"#475569",padding:"24px"}},"Aucun élève présent"));
+  }
+
+  // Class summary
+  var allActive=presentStudents;
+  var withData=allActive.filter(function(s){return getTir(sId,s.id).t1!==undefined;});
+  if(withData.length>0){
+    var total=withData.reduce(function(acc,s){var t=0;for(var i=1;i<=session.tirs;i++)t+=getTir(sId,s.id)["t"+i]||0;return acc+t;},0);
+    var summ=d({background:"#0a1428",border:"1px solid #1e3a5f",borderRadius:"10px",padding:"12px 16px",display:"flex",gap:"16px",alignItems:"center",flexWrap:"wrap"});
+    [[withData.length+"/"+allActive.length,"SAISIS","#60a5fa"],[Math.round(total/(withData.length*session.tirs*5)*100)+"%","MOY. CLASSE","#f59e0b"]].forEach(function(item){
+      var dd=d({});dd.appendChild(h("div",{style:{color:"#94a3b8",fontSize:"11px"}},item[1]));dd.appendChild(h("div",{style:{color:item[2],fontWeight:"700",fontSize:"20px"}},item[0]));summ.appendChild(dd);
+    });
+    div.appendChild(summ);
+  }
+  return div;
+}
+
+// ─── COURSE SECTION ──────────────────────────────────────────────────────────
+function buildCourseSection(session){
+  var sId=state.sessionId;
+  var div=d({});
+  var isRace=session.type==="race"||session.type==="eval";
+  if(!isRace){
+    var box=d({background:"#0d1525",border:"1px solid #1e293b",borderRadius:"10px",padding:"24px",textAlign:"center",color:"#475569"});
+    box.appendChild(h("div",{style:{fontSize:"36px",marginBottom:"8px"}},"🏃"));
+    box.appendChild(h("div",{style:{fontSize:"14px"}},"Pas de course pour "+session.label));
+    div.appendChild(box);return div;
+  }
+  var rd=state.raceData[sId]||{waves:[]};
+  var presentStudents=STUDENTS.filter(function(s){var st=getStatus(sId,s.id)||(s.ds!=="normal"?s.ds:"");return st!=="ABS";});
+  var assignedIds={};
+  rd.waves.forEach(function(w){w.studentIds.forEach(function(id){assignedIds[id]=true;});});
+  var unassigned=presentStudents.filter(function(s){return!assignedIds[s.id];});
+
+  // Info banner
+  var infoMap={
+    staggered:{icon:"⏱",title:"Départs décalés · +"+session.startInterval+"s entre coureurs",sub:session.penaltyType==="seconds"?"+"+session.penaltyPerMiss+"s/cible manquée":"1er à l'arrivée gagne"},
+    pursuit:{icon:"🔄",title:"Poursuite · 1er à l'arrivée gagne",sub:"Écarts basés sur le Sprint précédent"},
+    mass:{icon:"🟢",title:"Mass Start · Départ groupé",sub:"Tous partent ensemble · 1er gagne"},
+  };
+  var info=infoMap[session.startType];
+  if(info){
+    var banner=d({background:"#0d1525",border:"1px solid #1e3a5f",borderRadius:"10px",padding:"10px 14px",marginBottom:"12px",display:"flex",gap:"10px",alignItems:"center",flexWrap:"wrap"});
+    banner.appendChild(h("span",{style:{fontSize:"20px"}},info.icon));
+    var bi=d({flex:"1"});
+    bi.appendChild(h("div",{style:{color:"#f1f5f9",fontWeight:"600",fontSize:"13px"}},info.title));
+    bi.appendChild(h("div",{style:{color:"#64748b",fontSize:"11px"}},info.sub));
+    banner.appendChild(bi);
+    if(session.penaltyType==="seconds")banner.appendChild(h("span",{style:{background:"#2d1a0a",color:"#f59e0b",border:"1px solid #b45309",borderRadius:"6px",padding:"3px 9px",fontSize:"11px",fontWeight:"700"}},"+"+session.penaltyPerMiss+"s/cible"));
+    div.appendChild(banner);
+  }
+
+  rd.waves.forEach(function(wave){div.appendChild(buildWaveCard(wave,session,presentStudents));});
+
+  if(unassigned.length>0){
+    var btn=h("button",{style:{width:"100%",padding:"16px",background:"#0a1428",border:"2px dashed #1e3a5f",borderRadius:"12px",color:"#3b82f6",fontSize:"15px",fontWeight:"700",marginTop:"8px",display:"flex",alignItems:"center",justifyContent:"center",gap:"8px"},onClick:function(){
+      setState({waveSetup:{step:1,selected:unassigned.map(function(s){return s.id;}),name:"Groupe "+(rd.waves.length+1),order:[],offsets:{},importDone:false,mode:"live"}});
+    }});
+    btn.appendChild(h("span",{style:{fontSize:"22px"}},"＋"));
+    btn.appendChild(txt(" Nouveau groupe "));
+    btn.appendChild(h("span",{style:{background:"#0f2d4c",color:"#60a5fa",fontSize:"11px",padding:"2px 8px",borderRadius:"4px"}},unassigned.length+" non affecté"+(unassigned.length>1?"s":"")));
+    div.appendChild(btn);
+  }
+  return div;
+}
+
+function buildWaveCard(wave,session,presentStudents){
+  var sId=state.sessionId;
+  var students=presentStudents.filter(function(s){return wave.studentIds.indexOf(s.id)>=0;});
+  var isManualMode=wave.mode==="manual";
+  var allManual=isManualMode&&wave.studentIds.every(function(id){return wave.manualTimes&&wave.manualTimes[id]!==undefined;});
+  var allArrived=!isManualMode&&wave.studentIds.length>0&&wave.studentIds.every(function(id){return(wave.arrivals||{})[id];});
+  var arrivedCount=isManualMode?Object.keys(wave.manualTimes||{}).length:Object.keys(wave.arrivals||{}).length;
+  var status=isManualMode?(allManual?"done":"manual"):(!wave.startedAt?"pending":allArrived?"done":"running");
+  var statusBorder={pending:"#1e3a5f",running:"#166534",done:"#1e4d8c",manual:"#7c3aed"}[status];
+
+  var sortedStudents=session.startType==="staggered"?students.slice().sort(function(a,b){return((wave.startOffsets||{})[a.id]||0)-((wave.startOffsets||{})[b.id]||0);}):students;
+
+  var results=[];
+  sortedStudents.forEach(function(s){
+    var res=getStudentResult(s.id,sId);
+    if(res)results.push({student:s,res:res});
+  });
+  results.sort(function(a,b){return a.res.finalTime-b.res.finalTime;});
+
+  var card=d({background:"#0d1525",border:"2px solid "+statusBorder,borderRadius:"12px",marginBottom:"12px",overflow:"hidden"});
+
+  // Header
+  var hdr=d({background:status==="running"?"#0a1e0a":status==="done"?"#0a1630":status==="manual"?"#1a0f2d":"#0d1d35",padding:"12px 16px",display:"flex",alignItems:"center",gap:"10px"});
+  var hInfo=d({flex:"1"});
+  var ttlRow=d({display:"flex",alignItems:"center",gap:"8px",flexWrap:"wrap"});
+  ttlRow.appendChild(h("span",{style:{color:"#f1f5f9",fontWeight:"700",fontSize:"16px"}},wave.name));
+  var statusLabels={pending:"En attente",running:"🔴 EN COURSE",done:"✓ Terminé",manual:"📝 Saisie"};
+  ttlRow.appendChild(h("span",{style:{background:statusBorder+"40",color:status==="running"?"#4ade80":status==="done"?"#60a5fa":status==="manual"?"#c084fc":"#64748b",fontSize:"11px",padding:"2px 7px",borderRadius:"4px",fontWeight:"700"}},statusLabels[status]));
+  hInfo.appendChild(ttlRow);
+  hInfo.appendChild(h("div",{style:{color:"#64748b",fontSize:"12px",marginTop:"2px"}},students.length+" coureur"+(students.length>1?"s":"")+(wave.startedAt?" · Départ "+new Date(wave.startedAt).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",second:"2-digit"}):"")));
+  hdr.appendChild(hInfo);
+  // Mode toggle button
+  var modeToggleBtn=h("button",{style:{background:isManualMode?"#1a0f2d":"#0f2d4c",border:"1px solid "+(isManualMode?"#7c3aed":"#1e4d8c"),borderRadius:"6px",color:isManualMode?"#c084fc":"#60a5fa",fontSize:"11px",padding:"4px 9px",fontWeight:"700",whiteSpace:"nowrap"},onClick:function(wid,curMode){return function(){
+    updateWave(wid,function(w){return Object.assign({},w,{mode:curMode==="manual"?"live":"manual"});});
+  };}(wave.id,wave.mode||"live")});
+  modeToggleBtn.textContent=isManualMode?"🚀 Passer en live":"📝 Saisie manuelle";
+  hdr.appendChild(modeToggleBtn);
+  var delBtn=h("button",{style:{background:"transparent",border:"none",color:"#334155",fontSize:"18px",padding:"4px 8px"},onClick:function(wid){return function(){if(confirm("Supprimer ce groupe ?"))deleteWave(wid);};}(wave.id)});
+  delBtn.textContent="✕";hdr.appendChild(delBtn);
+  card.appendChild(hdr);
+
+  var body=d({padding:"12px 16px"});
+
+  if(isManualMode){
+    // Manual entry mode
+    body.appendChild(h("div",{style:{color:"#c084fc",fontSize:"12px",marginBottom:"10px"}},"Saisissez les temps bruts (depuis le départ) au format MM:SS"));
+    var mlist=d({display:"flex",flexDirection:"column",gap:"8px",marginBottom:"12px"});
+    sortedStudents.forEach(function(s){
+      var offset=(wave.startOffsets||{})[s.id]||0;
+      var existing=wave.manualTimes&&wave.manualTimes[s.id]!==undefined?fmtTime(wave.manualTimes[s.id]):"";
+      var row=d({display:"flex",alignItems:"center",gap:"10px",background:"#0a1428",border:"1px solid #1e293b",borderRadius:"8px",padding:"8px 12px"});
+      var nameEl=d({flex:"1"});
+      nameEl.appendChild(h("div",{style:{color:"#f1f5f9",fontSize:"14px",fontWeight:"600"}},s.nom+" "+s.prenom));
+      if(offset>0)nameEl.appendChild(h("div",{style:{color:"#a78bfa",fontSize:"11px"}},"départ +"+fmtTime(offset)));
+      row.appendChild(nameEl);
+      var inp=h("input",{type:"text",style:{width:"72px",background:"#0f2d4c",border:"1px solid #1e4d8c",borderRadius:"6px",color:"#4ade80",fontFamily:"monospace",fontSize:"16px",textAlign:"center",padding:"6px 4px"},placeholder:"MM:SS"},existing);
+      function saveManualTime(wid,sid,val){
+        var secs=parseMMSS(val);
+        updateWave(wid,function(w){
+          var mt=Object.assign({},w.manualTimes||{});mt[sid]=secs;
+          return Object.assign({},w,{manualTimes:mt});
+        });
+      }
+      inp.addEventListener("blur",function(wid,sid){return function(e){saveManualTime(wid,sid,e.target.value);};}(wave.id,s.id));
+      inp.addEventListener("keydown",function(wid,sid){return function(e){if(e.key==="Enter"){e.target.blur();saveManualTime(wid,sid,e.target.value);}};}(wave.id,s.id));
+      row.appendChild(inp);
+      // Show net time if entered
+      if(wave.manualTimes&&wave.manualTimes[s.id]!==undefined){
+        var net=wave.manualTimes[s.id]-offset;
+        var missed=session.penaltyType==="seconds"?calcMissed(s.id,sId)||0:null;
+        var final=missed!==null?net+missed*(session.penaltyPerMiss||10):net;
+        var tEl=d({textAlign:"right",minWidth:"60px"});
+        tEl.appendChild(h("div",{style:{color:"#4ade80",fontFamily:"monospace",fontSize:"13px",fontWeight:"700"}},fmtTime(final)));
+        if(missed>0)tEl.appendChild(h("div",{style:{color:"#f87171",fontSize:"10px"}},"+"+missed+"×pen"));
+        row.appendChild(tEl);
+      }
+      mlist.appendChild(row);
+    });
+    body.appendChild(mlist);
+  } else {
+    // Live timing mode
+    if(wave.startedAt){
+      var cb=d({background:"#050c18",padding:"10px 14px",display:"flex",alignItems:"center",gap:"10px",borderBottom:"1px solid #1e293b",marginBottom:"12px",borderRadius:"8px"});
+      cb.appendChild(h("span",{style:{fontSize:"16px"}},"⏱"));
+      var chrEl=d({fontFamily:"monospace",fontSize:"26px",fontWeight:"700",color:status==="running"?"#4ade80":"#60a5fa",letterSpacing:"2px"});
+      chrEl.textContent=fmtTime((Date.now()-wave.startedAt)/1000);
+      chrEl.id="chrono-"+wave.id;
+      cb.appendChild(chrEl);
+      cb.appendChild(d({flex:"1"}));
+      cb.appendChild(h("span",{style:{color:"#475569",fontSize:"12px"}},arrivedCount+"/"+students.length+" arrivé"+(arrivedCount>1?"s":"")));
+      body.appendChild(cb);
+    }
+
+    var slist=d({marginBottom:"12px"});
+    sortedStudents.forEach(function(s,idx){
+      var offset=(wave.startOffsets||{})[s.id]||0;
+      if(!wave.startedAt){
+        var row=d({display:"flex",alignItems:"center",gap:"10px",padding:"8px 10px",background:"#0a1428",border:"1px solid #1e293b",borderRadius:"8px",marginBottom:"6px"});
+        if(session.startType!=="mass"){
+          var nb=d({width:"24px",height:"24px",borderRadius:"50%",background:"#0f2d4c",border:"1px solid #1e4d8c",display:"flex",alignItems:"center",justifyContent:"center",color:"#60a5fa",fontWeight:"700",fontSize:"12px",flexShrink:"0"});
+          nb.textContent=idx+1;row.appendChild(nb);
+        }
+        row.appendChild(h("span",{style:{color:"#f1f5f9",fontSize:"14px",flex:"1"}},s.nom+" "+s.prenom));
+        row.appendChild(h("span",{style:{color:offset>0?"#a78bfa":"#22c55e",fontFamily:"monospace",fontSize:"13px",fontWeight:"700"}},offset>0?"+"+fmtTime(offset):"00:00"));
+        slist.appendChild(row);
+      } else {
+        var arrived=(wave.arrivals||{})[s.id];
+        var rawSecs=arrived?(arrived-wave.startedAt)/1000:null;
+        var runSecs=rawSecs!==null?rawSecs-offset:null;
+        var missed=session.penaltyType==="seconds"?calcMissed(s.id,sId):null;
+        var pen=missed!==null?missed*(session.penaltyPerMiss||10):0;
+        var abtn=h("button",{style:{width:"100%",padding:"12px 14px",borderRadius:"10px",border:"2px solid "+(arrived?"#22c55e40":"#1e3a5f"),background:arrived?"#0f2a1a":"#0a1428",display:"flex",alignItems:"center",gap:"12px",textAlign:"left",marginBottom:"6px"},onClick:function(wid,sid){return function(){recordArrival(wid,sid);};}(wave.id,s.id)});
+        var bInfo=d({flex:"1"});
+        var nm=d({});nm.appendChild(h("span",{style:{color:arrived?"#4ade80":"#f1f5f9",fontWeight:"700",fontSize:"15px"}},s.nom+" "));nm.appendChild(h("span",{style:{color:"#94a3b8",fontSize:"13px"}},s.prenom));bInfo.appendChild(nm);
+        if(offset>0&&!arrived)bInfo.appendChild(h("div",{style:{color:"#a78bfa",fontSize:"11px",marginTop:"2px"}},"départ +"+fmtTime(offset)));
+        abtn.appendChild(bInfo);
+        if(arrived){
+          var t=d({textAlign:"right"});
+          t.appendChild(h("div",{style:{color:"#4ade80",fontFamily:"monospace",fontWeight:"700",fontSize:"17px"}},fmtTime(runSecs)));
+          if(missed!==null&&missed>0)t.appendChild(h("div",{style:{color:"#f87171",fontSize:"11px"}},"+"+fmtTime(pen)+" ("+missed+" raté"+(missed>1?"s":"")+")" ));
+          if(missed===0)t.appendChild(h("div",{style:{color:"#22c55e",fontSize:"11px"}},"✓ 0 pénalité"));
+          abtn.appendChild(t);
+        } else {
+          abtn.appendChild(h("div",{style:{background:"#0f2d4c",border:"1px solid #1e4d8c",borderRadius:"8px",padding:"7px 12px",color:"#3b82f6",fontWeight:"700",fontSize:"13px"}},"ARRIVÉE"));
+        }
+        slist.appendChild(abtn);
+      }
+    });
+    body.appendChild(slist);
+
+    var startBtn=h("button",{style:{width:"100%",padding:"15px",borderRadius:"10px",fontWeight:"700",fontSize:"16px",letterSpacing:"1px",background:!wave.startedAt?"linear-gradient(135deg,#166534,#15803d)":"#1e293b",color:!wave.startedAt?"#f0fdf4":"#64748b",border:!wave.startedAt?"2px solid #22c55e":"1px solid #334155",display:"flex",alignItems:"center",justifyContent:"center",gap:"10px"},onClick:function(wid){return function(){startWave(wid);};}(wave.id)});
+    startBtn.appendChild(h("span",{style:{fontSize:"20px"}},!wave.startedAt?"🚀":"↺"));
+    startBtn.appendChild(txt(!wave.startedAt?" DÉPART":" Réinitialiser"));
+    body.appendChild(startBtn);
+  }
+
+  // Results table
+  if(results.length>0){
+    var resDiv=d({marginTop:"12px"});
+    resDiv.appendChild(buildResultsTable(results,session));
+    body.appendChild(resDiv);
+  }
+
+  card.appendChild(body);
+  return card;
+}
+
+function deleteWave(waveId){
+  var sId=state.sessionId;
+  var rd=state.raceData[sId]||{waves:[]};
+  saveRd(sId,Object.assign({},rd,{waves:rd.waves.filter(function(w){return w.id!==waveId;})}));
+}
+
+function startWave(waveId){
+  var rd=state.raceData[state.sessionId];
+  var wv=rd&&rd.waves?rd.waves.find(function(w){return w.id===waveId;}):null;
+  if(wv&&wv.startedAt){if(!confirm("Réinitialiser le départ ?"))return;}
+  updateWave(waveId,function(w){return Object.assign({},w,{startedAt:Date.now(),arrivals:{}});});
+}
+
+function recordArrival(waveId,stId){
+  var rd=state.raceData[state.sessionId];
+  var wave=rd&&rd.waves?rd.waves.find(function(w){return w.id===waveId;}):null;
+  if(!wave)return;
+  if((wave.arrivals||{})[stId]){
+    if(!confirm("Annuler l'arrivée ?"))return;
+    updateWave(waveId,function(w){var a=Object.assign({},w.arrivals);delete a[stId];return Object.assign({},w,{arrivals:a});});
+  } else {
+    updateWave(waveId,function(w){var a=Object.assign({},w.arrivals||{});a[stId]=Date.now();return Object.assign({},w,{arrivals:a});});
+  }
+}
+
+function buildResultsTable(results,session){
+  var medals=["#f59e0b","#94a3b8","#b45309"];
+  var tbl=d({background:"#060d1a",border:"1px solid #1e3a5f",borderRadius:"10px",overflow:"hidden"});
+  var hdr=d({padding:"9px 14px",background:"#0f1929",borderBottom:"1px solid #1e293b",display:"flex",alignItems:"center",gap:"8px"});
+  hdr.appendChild(h("span",{style:{fontSize:"15px"}},"🏆"));
+  hdr.appendChild(h("span",{style:{color:"#f1f5f9",fontWeight:"700",fontSize:"13px"}},"Classement"));
+  hdr.appendChild(h("span",{style:{color:session.penaltyType==="seconds"?"#f59e0b":"#22c55e",fontSize:"11px",marginLeft:"auto"}},session.penaltyType==="seconds"?"temps net = brut − départ + pénalités":"1er à l'arrivée gagne"));
+  tbl.appendChild(hdr);
+  results.forEach(function(item,idx){
+    var student=item.student,res=item.res;
+    var medal=medals[idx]||null;
+    var gap=idx>0?res.finalTime-results[0].res.finalTime:0;
+    var row=d({padding:"9px 14px",borderBottom:idx<results.length-1?"1px solid #0f1929":"none",background:idx===0?"#0d1e0d":idx%2===0?"#060d1a":"#080f1e",display:"flex",alignItems:"center",gap:"10px"});
+    var nb=d({width:"26px",height:"26px",borderRadius:"50%",background:medal?medal+"30":"#0a1428",border:"2px solid "+(medal||"#1e293b"),display:"flex",alignItems:"center",justifyContent:"center",color:medal||"#475569",fontWeight:"700",fontSize:"13px",flexShrink:"0"});
+    nb.textContent=idx+1;row.appendChild(nb);
+    var info=d({flex:"1",minWidth:"0"});
+    info.appendChild(h("div",{style:{color:"#f1f5f9",fontWeight:"700",fontSize:"14px",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},student.nom+" "+student.prenom));
+    var sub=d({display:"flex",gap:"8px",marginTop:"2px",flexWrap:"wrap"});
+    if(res.offset>0)sub.appendChild(h("span",{style:{color:"#a78bfa",fontSize:"10px"}},"départ +"+fmtTime(res.offset)));
+    if(session.penaltyType==="seconds"&&res.missed>0)sub.appendChild(h("span",{style:{color:"#ef4444",fontSize:"10px"}},res.missed+" raté"+(res.missed>1?"s":"")+" +"+fmtTime(res.missed*(session.penaltyPerMiss||10))));
+    if(session.penaltyType==="seconds"&&res.missed===0)sub.appendChild(h("span",{style:{color:"#22c55e",fontSize:"10px"}},"✓ 0 pénalité"));
+    if(idx>0)sub.appendChild(h("span",{style:{color:"#64748b",fontSize:"10px"}},"+"+fmtTime(gap)));
+    if(res.manual)sub.appendChild(h("span",{style:{color:"#7c3aed",fontSize:"10px"}},"saisie manuelle"));
+    info.appendChild(sub);row.appendChild(info);
+    var times=d({textAlign:"right"});
+    times.appendChild(h("div",{style:{fontFamily:"monospace",fontWeight:"700",fontSize:"17px",color:idx===0?"#4ade80":"#f1f5f9"}},fmtTime(res.finalTime)));
+    if(session.penaltyType==="seconds"&&res.missed>0)times.appendChild(h("div",{style:{color:"#64748b",fontSize:"10px",fontFamily:"monospace"}},"brut "+fmtTime(res.runSecs)));
+    row.appendChild(times);
+    tbl.appendChild(row);
+  });
+  return tbl;
+}
+
+// ─── WAVE SETUP MODAL ────────────────────────────────────────────────────────
+function buildWaveSetupModal(session){
+  var sId=state.sessionId;
+  var rd=state.raceData[sId]||{waves:[]};
+  var presentStudents=STUDENTS.filter(function(s){var st=getStatus(sId,s.id)||(s.ds!=="normal"?s.ds:"");return st!=="ABS";});
+  var assignedIds={};rd.waves.forEach(function(w){w.studentIds.forEach(function(id){assignedIds[id]=true;});});
+  var unassigned=presentStudents.filter(function(s){return!assignedIds[s.id];});
+  var ws=state.waveSetup;
+
+  var bg=h("div",{className:"modal-bg",onClick:function(e){if(e.target===e.currentTarget)setState({waveSetup:null});}});
+  var modal=h("div",{className:"modal"});
+
+  // Header
+  var mhdr=d({display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"16px"});
+  var namePart=d({flex:"1",paddingRight:"10px"});
+  var nameInput=h("input",{type:"text",style:{background:"#0f2d4c",border:"1px solid #1e4d8c",borderRadius:"6px",color:"#f1f5f9",padding:"6px 10px",fontSize:"16px",fontWeight:"700",width:"100%"},value:ws.name});
+  nameInput.addEventListener("input",function(e){ws.name=e.target.value;});
+  namePart.appendChild(nameInput);
+  var stepLabels={1:"Sélectionner les coureurs",2:session.startType==="staggered"?"Ordre de départ (+"+session.startInterval+"s entre chaque)":session.startType==="pursuit"?"Décalages Poursuite (MM:SS depuis le 1er)":"",3:"Mode de saisie"};
+  namePart.appendChild(h("div",{style:{color:"#60a5fa",fontSize:"12px",marginTop:"4px"}},stepLabels[ws.step]||""));
+  mhdr.appendChild(namePart);
+  var closeBtn=h("button",{style:{background:"#1e293b",color:"#94a3b8",border:"none",borderRadius:"8px",width:"36px",height:"36px",flexShrink:"0",fontSize:"18px"},onClick:function(){setState({waveSetup:null});}});
+  closeBtn.textContent="✕";mhdr.appendChild(closeBtn);modal.appendChild(mhdr);
+
+  if(ws.step===1){
+    // Select students
+    var row=d({display:"flex",gap:"8px",marginBottom:"12px"});
+    var allBtn=h("button",{className:"btn-blue",style:{flex:"1",padding:"8px"},onClick:function(){ws.selected=unassigned.map(function(s){return s.id;});setState({waveSetup:Object.assign({},ws)});}});allBtn.textContent="Tous";
+    var noneBtn=h("button",{className:"btn-gray",style:{flex:"1",padding:"8px"},onClick:function(){ws.selected=[];setState({waveSetup:Object.assign({},ws)});}});noneBtn.textContent="Aucun";
+    row.appendChild(allBtn);row.appendChild(noneBtn);modal.appendChild(row);
+
+    var grid=d({display:"grid",gridTemplateColumns:"1fr 1fr",gap:"6px",marginBottom:"16px"});
+    unassigned.forEach(function(s){
+      var on=ws.selected.indexOf(s.id)>=0;
+      var btn=h("button",{style:{padding:"10px 12px",borderRadius:"8px",textAlign:"left",border:"2px solid "+(on?"#3b82f6":"#1e293b"),background:on?"#0f2d4c":"#0a1428",display:"flex",alignItems:"center",gap:"8px"},onClick:function(id){return function(){
+        if(ws.selected.indexOf(id)>=0)ws.selected=ws.selected.filter(function(x){return x!==id;});else ws.selected=ws.selected.concat([id]);
+        setState({waveSetup:Object.assign({},ws)});
+      };}(s.id)});
+      var cb=d({width:"22px",height:"22px",borderRadius:"4px",flexShrink:"0",background:on?"#3b82f6":"#1e293b",border:"2px solid "+(on?"#60a5fa":"#334155"),display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:"13px"});
+      cb.textContent=on?"✓":"";
+      btn.appendChild(cb);
+      var dd=d({});dd.appendChild(h("div",{style:{color:"#f1f5f9",fontWeight:"700",fontSize:"13px"}},s.nom));dd.appendChild(h("div",{style:{color:"#64748b",fontSize:"11px"}},s.prenom));
+      btn.appendChild(dd);grid.appendChild(btn);
+    });
+    modal.appendChild(grid);
+
+    var nextBtn=h("button",{style:{width:"100%",padding:"14px",borderRadius:"10px",fontWeight:"700",fontSize:"15px",border:"none",background:ws.selected.length===0?"#1e293b":"linear-gradient(135deg,#1e4d8c,#2563eb)",color:ws.selected.length===0?"#334155":"#fff"},onClick:function(){
+      if(ws.selected.length===0)return;
+      ws.step=session.startType==="mass"?3:2;
+      setState({waveSetup:Object.assign({},ws)});
+    }});
+    nextBtn.textContent="Suivant ("+ws.selected.length+") →";
+    modal.appendChild(nextBtn);
+  }
+
+  if(ws.step===2&&session.startType==="staggered"){
+    modal.appendChild(h("div",{style:{color:"#94a3b8",fontSize:"12px",marginBottom:"12px"}},"Utilisez ▲▼ pour définir l'ordre de départ."));
+    var list=d({display:"flex",flexDirection:"column",gap:"6px",marginBottom:"16px"});
+    (ws.order.length?ws.order:ws.selected).forEach(function(id,idx){
+      if(!ws.order.length)ws.order=ws.selected.slice();
+      var s=STUDENTS.find(function(st){return st.id===id;});
+      var row=d({display:"flex",alignItems:"center",gap:"10px",background:"#0a1428",border:"1px solid #1e293b",borderRadius:"8px",padding:"9px 12px"});
+      var nb=d({width:"26px",height:"26px",borderRadius:"50%",background:"#0f2d4c",border:"1px solid #1e4d8c",display:"flex",alignItems:"center",justifyContent:"center",color:"#60a5fa",fontWeight:"700",fontSize:"12px",flexShrink:"0"});
+      nb.textContent=idx+1;row.appendChild(nb);
+      row.appendChild(h("div",{style:{flex:"1",color:"#f1f5f9",fontSize:"14px"}},s.nom+" "+s.prenom));
+      row.appendChild(h("span",{style:{fontFamily:"monospace",color:idx===0?"#22c55e":"#a78bfa",fontSize:"13px",fontWeight:"700",minWidth:"48px",textAlign:"right"}},idx===0?"00:00":"+"+fmtTime(idx*session.startInterval)));
+      var arrows=d({display:"flex",flexDirection:"column",gap:"3px"});
+      var up=h("button",{style:{background:"#0f2d4c",border:"1px solid #1e4d8c",borderRadius:"4px",color:"#60a5fa",padding:"3px 7px",opacity:idx===0?"0.3":"1"},onClick:function(i){return function(){if(i===0)return;var a=ws.order.slice();var t=a[i-1];a[i-1]=a[i];a[i]=t;ws.order=a;setState({waveSetup:Object.assign({},ws)});};}(idx)});up.textContent="▲";
+      var dn=h("button",{style:{background:"#0f2d4c",border:"1px solid #1e4d8c",borderRadius:"4px",color:"#60a5fa",padding:"3px 7px",opacity:idx===ws.order.length-1?"0.3":"1"},onClick:function(i,len){return function(){if(i===len-1)return;var a=ws.order.slice();var t=a[i];a[i]=a[i+1];a[i+1]=t;ws.order=a;setState({waveSetup:Object.assign({},ws)});};}(idx,ws.order.length)});dn.textContent="▼";
+      arrows.appendChild(up);arrows.appendChild(dn);row.appendChild(arrows);list.appendChild(row);
+    });
+    modal.appendChild(list);
+    var btnRow=d({display:"flex",gap:"8px"});
+    var back=h("button",{className:"btn-gray",style:{flex:"1",padding:"12px"},onClick:function(){ws.step=1;setState({waveSetup:Object.assign({},ws)});}});back.textContent="← Retour";
+    var next=h("button",{style:{flex:"2",padding:"12px",background:"linear-gradient(135deg,#1e4d8c,#2563eb)",color:"#fff",border:"none",borderRadius:"8px",fontWeight:"700",fontSize:"14px"},onClick:function(){ws.step=3;setState({waveSetup:Object.assign({},ws)});}});next.textContent="Suivant →";
+    btnRow.appendChild(back);btnRow.appendChild(next);modal.appendChild(btnRow);
+  }
+
+  if(ws.step===2&&session.startType==="pursuit"){
+    if(session.prevSession){
+      var impBtn=h("button",{style:{width:"100%",padding:"11px 14px",background:"#0a2a15",border:"2px solid "+(ws.importDone?"#22c55e":"#166534"),borderRadius:"10px",color:ws.importDone?"#4ade80":"#86efac",fontWeight:"700",fontSize:"13px",marginBottom:"12px"},onClick:function(){
+        var ranking=getSessionRanking(session.prevSession);
+        if(!ranking.length){alert("Aucun résultat Sprint trouvé.");return;}
+        var best=ranking[0].finalTime;
+        ranking.forEach(function(r){if(ws.selected.indexOf(r.studentId)>=0)ws.offsets[r.studentId]=fmtTime(Math.round(r.finalTime-best));});
+        ws.importDone=true;setState({waveSetup:Object.assign({},ws)});
+      }});
+      var prevSess=SESSIONS.find(function(s){return s.id===session.prevSession;});
+      impBtn.textContent=ws.importDone?"✓ Écarts importés":"⬇ Importer depuis "+(prevSess?prevSess.label:"");
+      modal.appendChild(impBtn);
+    }
+    modal.appendChild(h("div",{style:{color:"#94a3b8",fontSize:"12px",marginBottom:"10px"}},"Écart depuis le 1er (MM:SS). Le plus rapide = 00:00."));
+    var selStudents=unassigned.filter(function(s){return ws.selected.indexOf(s.id)>=0;});
+    var list2=d({display:"flex",flexDirection:"column",gap:"8px",marginBottom:"16px"});
+    selStudents.forEach(function(s){
+      var row=d({display:"flex",alignItems:"center",gap:"10px",background:"#0a1428",border:"1px solid #1e293b",borderRadius:"8px",padding:"9px 12px"});
+      row.appendChild(h("div",{style:{flex:"1",color:"#f1f5f9",fontWeight:"600",fontSize:"14px"}},s.nom+" "+s.prenom));
+      row.appendChild(h("span",{style:{color:"#64748b",fontSize:"12px"}},"+"));
+      var inp=h("input",{type:"text",style:{width:"68px",background:"#0f2d4c",border:"1px solid #1e4d8c",borderRadius:"6px",color:"#a78bfa",fontFamily:"monospace",fontSize:"15px",textAlign:"center",padding:"6px 6px"},placeholder:"00:00"},ws.offsets[s.id]||"");
+      inp.addEventListener("input",function(id){return function(e){ws.offsets[id]=e.target.value;};}(s.id));
+      row.appendChild(inp);list2.appendChild(row);
+    });
+    modal.appendChild(list2);
+    var btnRow2=d({display:"flex",gap:"8px"});
+    var back2=h("button",{className:"btn-gray",style:{flex:"1",padding:"12px"},onClick:function(){ws.step=1;setState({waveSetup:Object.assign({},ws)});}});back2.textContent="← Retour";
+    var next2=h("button",{style:{flex:"2",padding:"12px",background:"linear-gradient(135deg,#1e4d8c,#2563eb)",color:"#fff",border:"none",borderRadius:"8px",fontWeight:"700",fontSize:"14px"},onClick:function(){ws.step=3;setState({waveSetup:Object.assign({},ws)});}});next2.textContent="Suivant →";
+    btnRow2.appendChild(back2);btnRow2.appendChild(next2);modal.appendChild(btnRow2);
+  }
+
+  if(ws.step===3){
+    // Mode selection: live or manual
+    modal.appendChild(h("div",{style:{color:"#f1f5f9",fontWeight:"700",fontSize:"15px",marginBottom:"12px"}},"Comment saisir les résultats ?"));
+    [["live","🚀 Départ live","Utiliser l'appli comme chronomètre · Bouton ARRIVÉE pour chaque coureur","#166534","#22c55e"],
+     ["manual","📝 Saisie manuelle","Entrer les temps directement · Pour des résultats déjà connus","#1e4d8c","#3b82f6"]
+    ].forEach(function(item){
+      var mode=item[0];
+      var selected=ws.mode===mode;
+      var btn=h("button",{style:{width:"100%",padding:"14px 16px",borderRadius:"10px",border:"2px solid "+(selected?item[4]:item[4]+"40"),background:selected?item[3]:"#0a1428",marginBottom:"10px",textAlign:"left",display:"flex",gap:"12px",alignItems:"flex-start"},onClick:function(m){return function(){ws.mode=m;setState({waveSetup:Object.assign({},ws)});};}(mode)});
+      var dot=d({width:"20px",height:"20px",borderRadius:"50%",border:"2px solid "+(selected?item[4]:"#334155"),background:selected?item[4]:"transparent",flexShrink:"0",marginTop:"2px"});
+      btn.appendChild(dot);
+      var txt2=d({});
+      txt2.appendChild(h("div",{style:{color:"#f1f5f9",fontWeight:"700",fontSize:"14px"}},item[1]));
+      txt2.appendChild(h("div",{style:{color:"#94a3b8",fontSize:"12px",marginTop:"3px"}},item[2]));
+      btn.appendChild(txt2);
+      modal.appendChild(btn);
+    });
+    var btnRow3=d({display:"flex",gap:"8px",marginTop:"8px"});
+    var back3=h("button",{className:"btn-gray",style:{flex:"1",padding:"12px"},onClick:function(){ws.step=session.startType==="mass"?1:2;setState({waveSetup:Object.assign({},ws)});}});back3.textContent="← Retour";
+    var go=h("button",{style:{flex:"2",padding:"12px",background:"linear-gradient(135deg,#166534,#15803d)",color:"#f0fdf4",border:"none",borderRadius:"8px",fontWeight:"700",fontSize:"15px"},onClick:function(){confirmWave(session,ws);}});go.textContent="✓ Créer le groupe";
+    btnRow3.appendChild(back3);btnRow3.appendChild(go);modal.appendChild(btnRow3);
+  }
+
+  bg.appendChild(modal);return bg;
+}
+
+function confirmWave(session,ws){
+  var startOffsets={};
+  if(session.startType==="staggered"){var ord=ws.order.length?ws.order:ws.selected;ord.forEach(function(id,i){startOffsets[id]=i*session.startInterval;});}
+  else if(session.startType==="pursuit"){ws.selected.forEach(function(id){startOffsets[id]=parseMMSS(ws.offsets[id]||"0");});}
+  var sId=state.sessionId;
+  var rd=state.raceData[sId]||{waves:[]};
+  var wave={id:Date.now().toString(),name:ws.name,studentIds:ws.selected,startOffsets:startOffsets,startedAt:null,arrivals:{},mode:ws.mode||"live",manualTimes:{}};
+  saveRd(sId,Object.assign({},rd,{waves:rd.waves.concat([wave])}));
+  setState({waveSetup:null});
+}
+
+// ─── STUDENT MANAGER MODAL ───────────────────────────────────────────────────
+function buildStudentManagerModal(){
+  var bg=h("div",{className:"modal-bg",onClick:function(e){if(e.target===e.currentTarget)setState({addStudentModal:false});}});
+  var modal=h("div",{className:"modal"});
+
+  var mhdr=d({display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"16px"});
+  mhdr.appendChild(h("div",{style:{color:"#f1f5f9",fontWeight:"700",fontSize:"17px"}},"⚙ Gestion des élèves"));
+  var closeBtn=h("button",{style:{background:"#1e293b",color:"#94a3b8",border:"none",borderRadius:"8px",width:"34px",height:"34px",fontSize:"17px"},onClick:function(){setState({addStudentModal:false});}});
+  closeBtn.textContent="✕";mhdr.appendChild(closeBtn);modal.appendChild(mhdr);
+
+  // Add form
+  var form=d({background:"#0a1428",border:"1px solid #1e3a5f",borderRadius:"10px",padding:"12px",marginBottom:"14px"});
+  form.appendChild(h("div",{style:{color:"#60a5fa",fontWeight:"700",fontSize:"13px",marginBottom:"10px"}},"+ Ajouter un élève"));
+  var nomInp=h("input",{type:"text",placeholder:"Nom",style:{marginBottom:"8px"}});
+  var prenomInp=h("input",{type:"text",placeholder:"Prénom",style:{marginBottom:"8px"}});
+  var dsSelect=h("select",{style:{width:"100%",marginBottom:"10px"}});
+  [["normal","Standard"],["SHN","SHN - Sportif Haut Niveau"],["AMG","AMG - Aménagement"]].forEach(function(item){
+    var o=h("option",{value:item[0]},item[1]);dsSelect.appendChild(o);
+  });
+  form.appendChild(nomInp);form.appendChild(prenomInp);form.appendChild(dsSelect);
+  var addBtn=h("button",{style:{width:"100%",padding:"10px",background:"linear-gradient(135deg,#1e4d8c,#2563eb)",color:"#fff",border:"none",borderRadius:"8px",fontWeight:"700",fontSize:"14px"},onClick:function(){
+    var nom=nomInp.value.trim(),prenom=prenomInp.value.trim();
+    if(!nom||!prenom){alert("Nom et prénom requis.");return;}
+    var maxId=STUDENTS.reduce(function(m,s){return s.id>m?s.id:m;},0);
+    STUDENTS.push({id:maxId+1,nom:nom,prenom:prenom,ds:dsSelect.value});
+    save("students",STUDENTS);setState({addStudentModal:true});
+  }});
+  addBtn.textContent="Ajouter";form.appendChild(addBtn);modal.appendChild(form);
+
+  // Student list
+  modal.appendChild(h("div",{style:{color:"#94a3b8",fontSize:"12px",marginBottom:"8px"}},STUDENTS.length+" élève"+(STUDENTS.length>1?"s":"")+" · Appuyer sur ✕ pour retirer"));
+  var list=d({display:"flex",flexDirection:"column",gap:"5px",maxHeight:"340px",overflowY:"auto"});
+  STUDENTS.forEach(function(s){
+    var cfg=s.ds!=="normal"?STATUS_CFG[s.ds]:STATUS_CFG[""];
+    var row=d({display:"flex",alignItems:"center",gap:"10px",background:"#0d1525",border:"1px solid #1e293b",borderRadius:"8px",padding:"9px 12px"});
+    row.appendChild(h("span",{style:{color:"#475569",fontSize:"12px",minWidth:"20px"}},s.id));
+    var info=d({flex:"1"});
+    info.appendChild(h("span",{style:{color:"#f1f5f9",fontWeight:"700",fontSize:"13px"}},s.nom+" "));
+    info.appendChild(h("span",{style:{color:"#94a3b8",fontSize:"12px"}},s.prenom));
+    if(s.ds!=="normal")info.appendChild(h("span",{style:{background:cfg.bg,color:cfg.text,fontSize:"10px",padding:"1px 5px",borderRadius:"3px",marginLeft:"6px",border:"1px solid "+cfg.border}},s.ds));
+    row.appendChild(info);
+    var delBtn=h("button",{style:{background:"transparent",border:"none",color:"#475569",fontSize:"16px",padding:"2px 6px"},onClick:function(id){return function(){
+      if(!confirm("Retirer cet élève de la liste ?"))return;
+      STUDENTS=STUDENTS.filter(function(x){return x.id!==id;});
+      save("students",STUDENTS);setState({addStudentModal:true});
+    };}(s.id)});
+    delBtn.textContent="✕";row.appendChild(delBtn);
+    list.appendChild(row);
+  });
+  modal.appendChild(list);
+  bg.appendChild(modal);return bg;
+}
+
+// ─── TIR MODAL ───────────────────────────────────────────────────────────────
+function buildTirModal(session){
+  var stId=state.tirModal;
+  var student=STUDENTS.find(function(s){return s.id===stId;});
+  var tir=getTir(state.sessionId,stId);
+
+  var bg=h("div",{className:"modal-bg",onClick:function(e){if(e.target===e.currentTarget)setState({tirModal:null});}});
+  var modal=h("div",{className:"modal"});
+
+  var mhdr=d({display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"16px"});
+  var mi=d({});
+  mi.appendChild(h("div",{style:{color:"#f1f5f9",fontWeight:"700",fontSize:"18px"}},student.nom+" "+student.prenom));
+  mi.appendChild(h("div",{style:{color:"#60a5fa",fontSize:"13px"}},session.label));
+  mhdr.appendChild(mi);
+  var closeBtn=h("button",{style:{background:"#1e293b",color:"#94a3b8",border:"none",borderRadius:"8px",width:"36px",height:"36px",fontSize:"18px"},onClick:function(){setState({tirModal:null});}});
+  closeBtn.textContent="✕";mhdr.appendChild(closeBtn);modal.appendChild(mhdr);
+
+  var localTir={};
+  for(var i=1;i<=session.tirs;i++)localTir["t"+i]=tir["t"+i]!==undefined?tir["t"+i]:null;
+
+  session.tirLabels.forEach(function(lbl,i){
+    var key="t"+(i+1),val=localTir[key];
+    var color=lbl==="C"?"#60a5fa":"#a78bfa",bg2=lbl==="C"?"#0f2d4c":"#1c1040",brd=lbl==="C"?"#3b82f6":"#7c3aed";
+    var block=d({marginBottom:"16px"});
+    var header=d({display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px"});
+    header.appendChild(h("span",{style:{background:bg2,color:color,border:"1px solid "+brd,borderRadius:"6px",padding:"4px 10px",fontSize:"13px",fontWeight:"700"}},"Tir "+(i+1)+" — "+(lbl==="C"?"🔵 Couché":"🟣 Debout")));
+    if(val!==null)header.appendChild(h("span",{style:{color:val>=4?"#22c55e":val>=2?"#f59e0b":"#ef4444",fontWeight:"700",fontSize:"14px"}},val+"/5"));
+    block.appendChild(header);
+    var btns=d({display:"flex",gap:"7px"});
+    [null,0,1,2,3,4,5].forEach(function(n){
+      var btn=h("button",{style:{flex:"1",padding:"11px 3px",borderRadius:"8px",border:"2px solid "+(val===n?brd:"#1e293b"),background:val===n?bg2:"#0a1428",color:val===n?color:"#475569",fontWeight:"700",fontSize:n===null?"11px":"16px"},onClick:function(nn,kk){return function(){
+        setTir(stId,kk,nn);
+        var ex=document.querySelector(".modal-bg");if(ex)ex.replaceWith(buildTirModal(session));
+      };}(n,key)});
+      btn.textContent=n===null?"—":n;btns.appendChild(btn);
+    });
+    block.appendChild(btns);modal.appendChild(block);
+  });
+
+  var vals=Object.keys(localTir).map(function(k){return localTir[k];}).filter(function(v){return v!==null;});
+  if(vals.length>0){
+    var hits=vals.reduce(function(a,b){return a+b;},0),poss=vals.length*5,pct=Math.round(hits/poss*100);
+    var sum=d({background:"#0a1428",border:"1px solid #1e3a5f",borderRadius:"10px",padding:"10px 14px",marginBottom:"12px",display:"flex",gap:"16px"});
+    var d1=d({});d1.appendChild(h("div",{style:{color:"#64748b",fontSize:"11px"}},"TOTAL"));d1.appendChild(h("div",{style:{color:"#f1f5f9",fontWeight:"700",fontSize:"22px"}},hits+"/"+poss));
+    var d2=d({});d2.appendChild(h("div",{style:{color:"#64748b",fontSize:"11px"}},"PRÉCISION"));d2.appendChild(h("div",{style:{fontWeight:"700",fontSize:"22px",color:pct>=60?"#22c55e":pct>=33?"#f59e0b":"#ef4444"}},pct+"%"));
+    sum.appendChild(d1);sum.appendChild(d2);modal.appendChild(sum);
+  }
+  var valBtn=h("button",{style:{width:"100%",background:"#0f2d4c",color:"#60a5fa",border:"1px solid #3b82f6",borderRadius:"10px",padding:"13px",fontSize:"15px",fontWeight:"700"},onClick:function(){setState({tirModal:null});}});
+  valBtn.textContent="✓ Valider";modal.appendChild(valBtn);
+  bg.appendChild(modal);return bg;
+}
+
+// ─── PROFIL TAB ──────────────────────────────────────────────────────────────
+function buildProfilTab(){
+  if(state.profilId!==null){
+    var st=STUDENTS.find(function(s){return s.id===state.profilId;});
+    return st?buildStudentProfile(st):buildProfilList();
+  }
+  return buildProfilList();
+}
+
+function buildProfilList(){
+  var div=d({});
+  div.appendChild(h("div",{style:{color:"#64748b",fontSize:"12px",marginBottom:"12px"}},"Appuyer sur un élève pour voir sa progression"));
+  var raceSessions=SESSIONS.filter(function(s){return(s.type==="race"||s.type==="eval")&&s.distance;});
+  var tirSessions=SESSIONS.filter(function(s){return(s.type==="race"||s.type==="eval")&&s.tirs>0;});
+  var grid=d({display:"grid",gridTemplateColumns:"1fr 1fr",gap:"6px"});
+  STUDENTS.forEach(function(s){
+    var rc=raceSessions.filter(function(rs){return getStudentResult(s.id,rs.id)!==null;}).length;
+    var tc=tirSessions.filter(function(rs){return state.shooting[rs.id]&&state.shooting[rs.id][s.id]&&state.shooting[rs.id][s.id].t1!==undefined;}).length;
+    var att=getAttendanceRate(s.id);
+    var btn=h("button",{style:{background:"#0d1525",border:"1px solid #1e293b",borderRadius:"10px",padding:"11px 12px",textAlign:"left",display:"flex",alignItems:"center",gap:"10px",width:"100%"},onClick:function(id){return function(){setState({profilId:id,_profilView:"course"});};}(s.id)});
+    var info=d({flex:"1",minWidth:"0"});
+    info.appendChild(h("div",{style:{color:"#f1f5f9",fontWeight:"700",fontSize:"13px",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},s.nom));
+    info.appendChild(h("div",{style:{color:"#94a3b8",fontSize:"12px"}},s.prenom));
+    var chips=d({display:"flex",gap:"5px",marginTop:"4px",flexWrap:"wrap"});
+    if(rc>0)chips.appendChild(h("span",{style:{color:"#60a5fa",fontSize:"10px",background:"#0f2d4c",borderRadius:"3px",padding:"1px 5px"}},"🏁 "+rc));
+    if(tc>0)chips.appendChild(h("span",{style:{color:"#22c55e",fontSize:"10px",background:"#0f2a1a",borderRadius:"3px",padding:"1px 5px"}},"🎯 "+tc));
+    if(att!==null)chips.appendChild(h("span",{style:{color:att>=80?"#22c55e":att>=50?"#f59e0b":"#ef4444",fontSize:"10px",background:"#0a1428",borderRadius:"3px",padding:"1px 5px"}},att+"% présence"));
+    info.appendChild(chips);
+    btn.appendChild(info);btn.appendChild(h("span",{style:{color:"#334155",fontSize:"18px"}},"›"));
+    grid.appendChild(btn);
+  });
+  div.appendChild(grid);return div;
+}
+
+function buildStudentProfile(student){
+  var div=d({});
+  var hdr=d({display:"flex",alignItems:"center",gap:"12px",marginBottom:"16px"});
+  var back=h("button",{className:"btn-blue",style:{padding:"8px 14px"},onClick:function(){setState({profilId:null});}});back.textContent="← Retour";hdr.appendChild(back);
+  var info=d({});
+  info.appendChild(h("div",{style:{color:"#f1f5f9",fontWeight:"700",fontSize:"18px"}},student.nom+" "+student.prenom));
+  info.appendChild(h("div",{style:{color:"#64748b",fontSize:"12px"}},"#"+student.id+" · "+(student.ds!=="normal"?student.ds:"Étudiant")));
+  hdr.appendChild(info);div.appendChild(hdr);
+
+  var raceSessions=SESSIONS.filter(function(s){return(s.type==="race"||s.type==="eval")&&s.distance;});
+  var tirSessions=SESSIONS.filter(function(s){return(s.type==="race"||s.type==="eval")&&s.tirs>0;});
+  var allSessions=SESSIONS.filter(function(s){return s.type!=="break";});
+
+  var raceRows=raceSessions.map(function(session){
+    var r=getStudentResult(student.id,session.id);if(!r)return null;
+    var speedKmh=r.finalTime>0?session.distance/r.finalTime*3.6:null;
+    var paceSecPerKm=r.finalTime>0?r.finalTime/(session.distance/1000):null;
+    return{session:session,r:r,speedKmh:speedKmh,paceSecPerKm:paceSecPerKm};
+  }).filter(Boolean);
+
+  var tirRows=tirSessions.map(function(session){
+    var tir=(state.shooting[session.id]||{})[student.id];if(!tir||tir.t1===undefined)return null;
+    var vals=[],hits=0,done=0;
+    for(var i=1;i<=session.tirs;i++){var v=tir["t"+i];vals.push(v!==undefined?v:null);if(v!==null&&v!==undefined){done++;hits+=v;}}
+    return{session:session,vals:vals,hits:hits,done:done,pct:done>0?Math.round(hits/(done*5)*100):null};
+  }).filter(Boolean);
+
+  // Attendance
+  var pastSessions=allSessions.filter(function(s){return s.date<=TODAY;});
+  var presentSessions=pastSessions.filter(function(s){
+    var st=getStatus(s.id,student.id);return st==="P"||st==="SHN"||st==="AMG"||st==="RET";
+  });
+  var attRate=pastSessions.length>0?Math.round(presentSessions.length/pastSessions.length*100):null;
+
+  var avgSpeed=raceRows.length>0?raceRows.reduce(function(a,r){return a+(r.speedKmh||0);},0)/raceRows.length:null;
+  var avgTir=tirRows.length>0?Math.round(tirRows.reduce(function(a,r){return a+(r.pct||0);},0)/tirRows.length):null;
+  var speedTrend=raceRows.length>=2?raceRows[raceRows.length-1].speedKmh-raceRows[0].speedKmh:null;
+
+  // Summary
+  var summary=d({display:"flex",gap:"7px",marginBottom:"16px",flexWrap:"wrap"});
+  var cards=[];
+  if(attRate!==null)cards.push([attRate+"%","PRÉSENCE",attRate>=80?"#22c55e":attRate>=50?"#f59e0b":"#ef4444","📅 "+presentSessions.length+"/"+pastSessions.length+" séances"]);
+  if(avgSpeed!==null)cards.push([avgSpeed.toFixed(1),"VITESSE MOY","#60a5fa","km/h"+(speedTrend!==null?" · "+(speedTrend>=0?"↑+":"↓")+Math.abs(speedTrend).toFixed(1):"")]);
+  if(avgTir!==null)cards.push([avgTir+"%","PRÉCISION TIR",avgTir>=60?"#22c55e":avgTir>=40?"#f59e0b":"#ef4444","moyenne tir"]);
+  cards.push([raceRows.length,"COURSES","#94a3b8","chronométrées"]);
+  cards.forEach(function(item){
+    var dd=d({background:"#0f1e2d",border:"1px solid #1e4d8c",borderRadius:"8px",padding:"9px 12px",textAlign:"center",flex:"1",minWidth:"80px"});
+    dd.appendChild(h("div",{style:{color:"#64748b",fontSize:"10px",marginBottom:"2px"}},item[1]));
+    dd.appendChild(h("div",{style:{color:item[2],fontWeight:"700",fontSize:"20px"}},item[0]));
+    dd.appendChild(h("div",{style:{color:"#475569",fontSize:"10px"}},item[3]));
+    summary.appendChild(dd);
+  });
+  div.appendChild(summary);
+
+  // Attendance breakdown
+  if(pastSessions.length>0){
+    var attSect=d({background:"#0d1525",border:"1px solid #1e3a5f",borderRadius:"10px",padding:"12px 14px",marginBottom:"14px"});
+    attSect.appendChild(h("div",{style:{color:"#f1f5f9",fontWeight:"700",fontSize:"13px",marginBottom:"8px"}},"📅 Présence détaillée"));
+    var attBar=d({display:"flex",gap:"4px",flexWrap:"wrap"});
+    allSessions.forEach(function(s){
+      if(s.type==="break"){
+        var sp=d({width:"8px",height:"28px",borderRadius:"3px",background:"#1e293b",opacity:"0.3"});attBar.appendChild(sp);return;
+      }
+      var st=getStatus(s.id,student.id)||(student.ds!=="normal"?student.ds:"");
+      var isFuture=s.date>TODAY;
+      var color=isFuture?"#1e293b":st==="P"||st==="SHN"||st==="AMG"?"#22c55e":st==="RET"?"#f97316":st==="ABS"?"#ef4444":"#334155";
+      var dot=d({width:"26px",height:"28px",borderRadius:"4px",background:color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"10px",fontWeight:"700",color:"#000",opacity:isFuture?"0.3":"1"});
+      dot.title=s.label+" ("+fmt(s.date)+")";
+      dot.textContent=s.label.replace("S","").replace(" –","").split("")[0]||"?";
+      attBar.appendChild(dot);
+    });
+    attSect.appendChild(attBar);
+    var legend=d({display:"flex",gap:"8px",marginTop:"8px",flexWrap:"wrap"});
+    [["#22c55e","Présent"],["#f97316","Retard"],["#ef4444","Absent"],["#334155","Non saisi"]].forEach(function(item){
+      var l=d({display:"flex",alignItems:"center",gap:"4px"});
+      var dot=d({width:"10px",height:"10px",borderRadius:"2px",background:item[0],flexShrink:"0"});
+      l.appendChild(dot);l.appendChild(h("span",{style:{color:"#64748b",fontSize:"10px"}},item[1]));
+      legend.appendChild(l);
+    });
+    attSect.appendChild(legend);
+    div.appendChild(attSect);
+  }
+
+  // View switcher
+  var switcher=d({display:"flex",gap:"8px",marginBottom:"12px"});
+  var currentView=state._profilView||"course";
+  [["course","🏁 Courses ("+raceRows.length+")"],["tir","🎯 Tir ("+tirRows.length+")"]].forEach(function(item){
+    var btn=h("button",{style:{flex:"1",padding:"9px 6px",borderRadius:"8px",border:"2px solid "+(currentView===item[0]?"#3b82f6":"#1e293b"),background:currentView===item[0]?"#0f2d4c":"#0a1428",color:currentView===item[0]?"#60a5fa":"#64748b",fontWeight:"700",fontSize:"13px"},onClick:function(id){return function(){state._profilView=id;render();};}(item[0])});
+    btn.textContent=item[1];switcher.appendChild(btn);
+  });
+  div.appendChild(switcher);
+
+  if(currentView==="course"){
+    if(!raceRows.length)div.appendChild(h("div",{style:{textAlign:"center",color:"#475569",padding:"24px"}},"Aucune course enregistrée"));
+    else{
+      var list=d({display:"flex",flexDirection:"column",gap:"8px"});
+      raceRows.forEach(function(item){
+        var session=item.session,r=item.r,speedKmh=item.speedKmh,paceSecPerKm=item.paceSecPerKm;
+        var pm=paceSecPerKm?Math.floor(paceSecPerKm/60):null,ps=paceSecPerKm?Math.round(paceSecPerKm%60):null;
+        var card=d({background:"#0d1525",border:"1px solid #1e3a5f",borderRadius:"10px",padding:"12px 14px"});
+        var hd=d({display:"flex",alignItems:"center",gap:"8px",marginBottom:"10px"});
+        hd.appendChild(h("span",{style:{fontSize:"18px"}},session.icon));
+        var si=d({flex:"1"});si.appendChild(h("div",{style:{color:"#f1f5f9",fontWeight:"700",fontSize:"14px"}},session.label));si.appendChild(h("div",{style:{color:"#64748b",fontSize:"11px"}},fmt(session.date)+" · "+(session.distance/1000).toFixed(2)+" km"));hd.appendChild(si);
+        card.appendChild(hd);
+        var metrics=d({display:"flex",gap:"7px",flexWrap:"wrap"});
+        [[fmtTime(r.finalTime),"TEMPS NET","#4ade80"],[speedKmh?speedKmh.toFixed(1):"—","VITESSE","#60a5fa"],[pm!==null?pm+":"+pad(ps):"—","ALLURE","#a78bfa"]].forEach(function(m){
+          var dd=d({background:"#0a1428",borderRadius:"8px",padding:"8px 10px",flex:"1",minWidth:"80px"});
+          dd.appendChild(h("div",{style:{color:"#64748b",fontSize:"10px"}},m[1]));
+          dd.appendChild(h("div",{style:{color:m[2],fontFamily:"monospace",fontWeight:"700",fontSize:"17px"}},m[0]));
+          metrics.appendChild(dd);
+        });
+        card.appendChild(metrics);list.appendChild(card);
+      });
+      div.appendChild(list);
+    }
+  }
+
+  if(currentView==="tir"){
+    if(!tirRows.length)div.appendChild(h("div",{style:{textAlign:"center",color:"#475569",padding:"24px"}},"Aucun résultat de tir"));
+    else{
+      var list2=d({display:"flex",flexDirection:"column",gap:"8px"});
+      tirRows.forEach(function(item){
+        var session=item.session,vals=item.vals,hits=item.hits,done=item.done,pct=item.pct;
+        var card=d({background:"#0d1525",border:"1px solid "+(pct>=60?"#22c55e30":pct>=40?"#f59e0b30":"#ef444430"),borderRadius:"10px",padding:"12px 14px"});
+        var hd=d({display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px"});
+        hd.appendChild(h("span",{style:{fontSize:"18px"}},session.icon));
+        var si=d({flex:"1"});si.appendChild(h("div",{style:{color:"#f1f5f9",fontWeight:"700",fontSize:"14px"}},session.label));si.appendChild(h("div",{style:{color:"#64748b",fontSize:"11px"}},fmt(session.date)));hd.appendChild(si);
+        var sc=d({textAlign:"right"});sc.appendChild(h("div",{style:{color:pct>=60?"#22c55e":pct>=40?"#f59e0b":"#ef4444",fontWeight:"700",fontSize:"22px"}},pct+"%"));sc.appendChild(h("div",{style:{color:"#64748b",fontSize:"11px"}},hits+"/"+(done*5)));hd.appendChild(sc);
+        card.appendChild(hd);
+        var pb=d({background:"#0a1428",borderRadius:"6px",height:"8px",overflow:"hidden",marginBottom:"8px"});
+        var pf=d({height:"100%",borderRadius:"6px",background:pct>=60?"#22c55e":pct>=40?"#f59e0b":"#ef4444",width:pct+"%"});pb.appendChild(pf);card.appendChild(pb);
+        var chips=d({display:"flex",gap:"6px",flexWrap:"wrap"});
+        vals.forEach(function(v,i){
+          var lbl=session.tirLabels[i];
+          var c=v===5?"#22c55e":v>=3?"#f59e0b":v!==null?"#ef4444":"#334155";
+          var chip=d({background:"#0a1428",border:"1px solid "+c+"40",borderRadius:"6px",padding:"4px 7px",textAlign:"center",minWidth:"44px"});
+          chip.appendChild(h("div",{style:{color:"#64748b",fontSize:"10px"}},(lbl==="C"?"🔵":"🟣")+" T"+(i+1)));
+          chip.appendChild(h("div",{style:{color:c,fontWeight:"700",fontSize:"14px"}},v!==null?v+"/5":"—"));
+          var dots=d({display:"flex",gap:"2px",justifyContent:"center",marginTop:"2px"});
+          if(v!==null){for(var j=0;j<5;j++){var dot=d({width:"6px",height:"6px",borderRadius:"50%",background:j<v?"#22c55e":"#1e293b"});dots.appendChild(dot);}}
+          chip.appendChild(dots);chips.appendChild(chip);
+        });
+        card.appendChild(chips);list2.appendChild(card);
+      });
+      div.appendChild(list2);
+    }
+  }
+  return div;
+}
+
+// ─── BOOT ────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
